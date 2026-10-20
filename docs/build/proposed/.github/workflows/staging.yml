@@ -1,0 +1,116 @@
+# Installs to .github/workflows/staging.yml (G1-protected). Not a required PR check: it runs
+# on main after merge. A step's done PR cites the green "gate STEP-NN" job of one of these
+# runs, and check_evidence.py verifies it with `gh run view` (G3). A red job blocks only
+# that step.
+#
+# The "staging" GitHub environment holds the staging secrets and allows deployments from main
+# only (https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments).
+# Staging holds synthetic data only. Each gate job uses its own schema (TILLOWL_CI_RUN), so
+# runs don't collide. Gates never send real SMS or email and never call a paid API without a
+# stub or a vendor test credential.
+name: staging
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: staging
+  cancel-in-progress: false
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+
+jobs:
+  deploy:
+    name: deploy
+    runs-on: ubuntu-24.04
+    environment: staging
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Deploy staging and wait until it serves this release (or a later one)
+        env:
+          DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}
+          STAGING_URL: ${{ vars.STAGING_URL }}
+        run: |
+          if [ -z "$DEPLOY_HOOK" ] || [ -z "$STAGING_URL" ]; then
+            echo "Staging is not configured yet (STEP-09 sets RENDER_STAGING_DEPLOY_HOOK and STAGING_URL)."
+            exit 0
+          fi
+          curl -fsS -X POST "$DEPLOY_HOOK" > /dev/null
+          for _ in $(seq 1 60); do
+            release=$(curl -fsS "$STAGING_URL/healthz" 2>/dev/null \
+              | python -c 'import json,sys; print(json.load(sys.stdin).get("release",""))' 2>/dev/null || true)
+            if [ -n "$release" ] && git merge-base --is-ancestor "$GITHUB_SHA" "$release" 2>/dev/null; then
+              echo "staging healthy at a release that contains this commit"
+              exit 0
+            fi
+            sleep 10
+          done
+          echo "::error::staging did not serve a release containing $GITHUB_SHA within 10 minutes"
+          exit 1
+
+  plan:
+    name: plan
+    runs-on: ubuntu-24.04
+    outputs:
+      any: ${{ steps.m.outputs.any }}
+      matrix: ${{ steps.m.outputs.matrix }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - id: m
+        run: |
+          if [ ! -f tools/check_evidence.py ]; then
+            echo 'any=false' >> "$GITHUB_OUTPUT"
+            echo 'matrix={"include":[{"step":"none","files":""}]}' >> "$GITHUB_OUTPUT"
+            exit 0
+          fi
+          out=$(python tools/check_evidence.py staging-matrix)
+          echo "any=$(echo "$out" | python -c 'import json,sys; print(str(json.load(sys.stdin)["any"]).lower())')" >> "$GITHUB_OUTPUT"
+          echo "matrix=$(echo "$out" | python -c 'import json,sys; print(json.dumps(json.load(sys.stdin)["matrix"]))')" >> "$GITHUB_OUTPUT"
+
+  gate:
+    name: gate ${{ matrix.step }}
+    needs: [deploy, plan]
+    if: needs.plan.outputs.any == 'true'
+    runs-on: ubuntu-24.04
+    environment: staging
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.plan.outputs.matrix) }}
+    env:
+      STAGING_DATABASE_URL: ${{ secrets.STAGING_DATABASE_URL }}
+      STAGING_URL: ${{ vars.STAGING_URL }}
+      TILLOWL_CI_RUN: ${{ github.run_id }}_${{ github.run_attempt }}_${{ matrix.step }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: |
+          python -m venv .venv
+          .venv/bin/pip install -q -e '.[dev]'
+      - name: Gate ${{ matrix.step }}
+        env:
+          GATE_FILES: ${{ matrix.files }}
+          STEP_ID: ${{ matrix.step }}
+        run: |
+          # shellcheck disable=SC2086
+          .venv/bin/python -m pytest -c pytest.ini --rootdir=. $GATE_FILES --junitxml=junit.xml
+          python tools/check_evidence.py junit --report junit.xml --step "$STEP_ID"

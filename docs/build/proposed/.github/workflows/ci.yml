@@ -1,0 +1,65 @@
+# Installs to .github/workflows/ci.yml (G1-protected). Required check: "tests".
+# Runs the full suite plus every gate test of ci_fixture steps that are in_progress or done,
+# then fails on any skip, xfail, failure or gate file with zero tests (G3).
+# ci_staging gate files are left out here; the "staging" workflow runs them on main.
+# No path filters (a skipped required check stays Pending).
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.event.pull_request.number || github.sha }}
+  cancel-in-progress: true
+
+env:
+  PYTHONDONTWRITEBYTECODE: "1"
+  PYTEST_DISABLE_PLUGIN_AUTOLOAD: "1"
+
+jobs:
+  tests:
+    name: tests
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out the code under test
+        uses: actions/checkout@v4
+        with:
+          path: pr
+          persist-credentials: false
+      - name: Check out trusted tools (base branch)
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.base_ref || github.ref_name }}
+          path: trusted
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: PostgreSQL server binaries for the conftest fixture
+        run: |
+          command -v pg_config >/dev/null 2>&1 || { sudo apt-get update -q && sudo apt-get install -y -q postgresql; }
+          ls "$(pg_config --bindir)/initdb"
+      - name: Install
+        working-directory: pr
+        run: |
+          python -m venv .venv
+          if [ -f pyproject.toml ]; then .venv/bin/pip install -q -e '.[dev]'; else .venv/bin/pip install -q 'pytest==8.*'; fi
+      - name: Full suite and ci_fixture gates
+        working-directory: pr
+        run: |
+          TOOLS=../trusted/tools
+          [ -f "$TOOLS/check_evidence.py" ] || TOOLS=tools
+          if [ ! -f "$TOOLS/check_evidence.py" ]; then echo "tools not installed yet"; exit 0; fi
+          if ! find tests -name 'test_*.py' 2>/dev/null | grep -q .; then
+            echo "no tests yet"
+            exit 0
+          fi
+          IGNORE=$(python "$TOOLS/check_evidence.py" --root . gate-files --kind ci_staging --format ignore)
+          # shellcheck disable=SC2086
+          .venv/bin/python -m pytest -c pytest.ini --rootdir=. tests $IGNORE --junitxml=junit.xml
+          python "$TOOLS/check_evidence.py" --root . junit --report junit.xml

@@ -1,0 +1,10 @@
+# Installs to .gitignore (not protected).
+.venv/
+__pycache__/
+*.pyc
+.env
+.env.*
+junit*.xml
+docs/build/progress.json
+.claude/settings.local.json
+.claude/worktrees/

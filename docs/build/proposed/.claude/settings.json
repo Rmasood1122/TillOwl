@@ -1,0 +1,60 @@
+{
+  "$schema": "https://json.schemastore.org/claude-code-settings.json",
+  "permissions": {
+    "deny": [
+      "Bash(gh pr review *)",
+      "Bash(gh pr merge *)",
+      "Bash(gh api *)",
+      "Bash(gh run rerun *)",
+      "Bash(gh workflow run *)",
+      "Bash(gh secret *)",
+      "Bash(gh variable *)",
+      "Bash(gh repo edit *)",
+      "Bash(git push origin main)",
+      "Bash(git push origin main *)",
+      "Bash(git push origin HEAD:main)",
+      "Bash(git push origin HEAD:main *)",
+      "Bash(git push --force *)",
+      "Bash(git push -f *)",
+      "Bash(git push --no-verify *)",
+      "Bash(git commit --no-verify *)",
+      "Bash(git commit -n *)",
+      "Bash(render *)",
+      "Bash(psql *)",
+      "Bash(python tools/check_artifact.py *)",
+      "Bash(python3 tools/check_artifact.py *)",
+      "Bash(.venv/bin/python tools/check_artifact.py *)",
+      "Read(./.env)",
+      "Read(./.env.*)"
+    ],
+    "ask": [
+      "Edit(./tools/**)",
+      "Edit(./.github/**)",
+      "Edit(./.claude/**)",
+      "Edit(./CLAUDE.md)",
+      "Edit(./conftest.py)",
+      "Edit(./pytest.ini)",
+      "Edit(./docs/build/gates/**)",
+      "Edit(./docs/build/PLANNING_PROMPT.md)",
+      "Edit(./docs/build/go-no-go-criteria.md)",
+      "Edit(./tillowl/digest/templates/MANIFEST.json)"
+    ]
+  },
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "excludedCommands": [],
+    "network": {
+      "allowedDomains": [
+        "github.com",
+        "api.github.com",
+        "*.githubusercontent.com",
+        "pypi.org",
+        "files.pythonhosted.org",
+        "connect.squareupsandbox.com"
+      ],
+      "allowLocalBinding": true
+    }
+  }
+}
