@@ -1,0 +1,40 @@
+{
+  "sandbox": {
+    "enabled": true,
+    "failIfUnavailable": true,
+    "allowUnsandboxedCommands": false,
+    "network": {
+      "strictAllowlist": true
+    },
+    "filesystem": {
+      "denyRead": [
+        "~/.aws",
+        "~/.azure",
+        "~/.config/gcloud",
+        "~/.kube",
+        "~/.docker/config.json",
+        "~/.pgpass",
+        "~/.render",
+        "~/.config/render",
+        "~/.ssh",
+        "~/.netrc",
+        "/ABSOLUTE/PATH/TO/TillOwl-private-evidence"
+      ]
+    }
+  },
+  "permissions": {
+    "deny": [
+      "Read(~/.aws/**)",
+      "Read(~/.azure/**)",
+      "Read(~/.config/gcloud/**)",
+      "Read(~/.kube/**)",
+      "Read(~/.docker/config.json)",
+      "Read(~/.pgpass)",
+      "Read(~/.render/**)",
+      "Read(~/.config/render/**)",
+      "Read(~/.ssh/**)",
+      "Read(~/.netrc)",
+      "Read(//ABSOLUTE/PATH/TO/TillOwl-private-evidence/**)"
+    ]
+  }
+}

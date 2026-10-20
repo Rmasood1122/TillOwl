@@ -1,0 +1,46 @@
+# Installs to .github/CODEOWNERS (G1-protected). GitHub reads .github/, then the root, then docs/.
+# Covers only the G1 protected paths, evidence, findings and the status files of founder-gated
+# steps (human, production_job, sandbox_spike), per G2. Everything else needs one approval from
+# any collaborator who isn't the author (branch protection). Both owners need write access.
+# GitHub enforces "a code owner who isn't the author"; that the FOUNDER approves gate-change and
+# founder-gated PRs is enforced by the governance workflow's founder-approval check.
+
+/tests/gates/                         @Rmasood1122 @Ahmad317-Engineer
+/docs/build/gates/                    @Rmasood1122 @Ahmad317-Engineer
+/tools/                               @Rmasood1122 @Ahmad317-Engineer
+/conftest.py                          @Rmasood1122 @Ahmad317-Engineer
+/pytest.ini                           @Rmasood1122 @Ahmad317-Engineer
+/.github/                             @Rmasood1122 @Ahmad317-Engineer
+/.claude/                             @Rmasood1122 @Ahmad317-Engineer
+/CLAUDE.md                            @Rmasood1122 @Ahmad317-Engineer
+/docs/build/PLANNING_PROMPT.md        @Rmasood1122 @Ahmad317-Engineer
+/docs/build/go-no-go-criteria.md      @Rmasood1122 @Ahmad317-Engineer
+/tillowl/digest/templates/MANIFEST.json  @Rmasood1122 @Ahmad317-Engineer
+/migrations/*_rls*.sql                @Rmasood1122 @Ahmad317-Engineer
+/migrations/*_audit_role*.sql         @Rmasood1122 @Ahmad317-Engineer
+/docs/build/evidence/                 @Rmasood1122 @Ahmad317-Engineer
+/docs/build/findings/                 @Rmasood1122 @Ahmad317-Engineer
+
+# Status files of founder-gated steps (gate_kind human, production_job or sandbox_spike).
+/docs/build/status/STEP-01.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-02.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-03.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-04.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-05.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-06.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-07.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-12.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-13.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-14.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-15.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-16.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-17.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-18.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-20.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-21.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-22.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-33.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-34.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-40.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-41.json       @Rmasood1122 @Ahmad317-Engineer
+/docs/build/status/STEP-43.json       @Rmasood1122 @Ahmad317-Engineer
