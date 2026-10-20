@@ -4,12 +4,15 @@
 # pull_request_target runs THIS file as it is on the base branch, and the tools are checked
 # out from the base branch too, so a PR cannot weaken the checks that judge it. The PR's files
 # are only read as data (git diff, JSON, text). Never add a step here that runs code from "pr/".
+# The install PR itself runs no governance checks: this file does not exist on main until it
+# merges. GOVERNANCE.md's install plan covers that window.
 # No path filters: a required check skipped by a path filter stays Pending and blocks merging
 # (https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/troubleshooting-required-status-checks).
 name: governance
 
 on:
   pull_request_target:
+    branches: [main]
     types: [opened, synchronize, reopened, edited, ready_for_review]
   push:
     branches: [main]
@@ -57,10 +60,8 @@ jobs:
           HEAD_REF: ${{ github.event.pull_request.head.ref }}
         run: |
           TOOLS=trusted/tools
-          if [ ! -f "$TOOLS/check_evidence.py" ]; then
-            echo "::warning::Bootstrap: the base branch has no tools yet, so the PR's own copy is used. This is acceptable only for the governance install PR."
-            TOOLS=pr/tools
-          fi
+          # No fallback to the PR's own tools: under pull_request_target that would run PR code.
+          if [ ! -f "$TOOLS/check_evidence.py" ]; then echo "::error::tools missing on the base branch"; exit 1; fi
           if [ "$EVENT" = "pull_request_target" ]; then
             python "$TOOLS/check_evidence.py" --root pr ci --base "origin/$BASE_REF" --head HEAD \
               --branch "$HEAD_REF" --repo "$GITHUB_REPOSITORY" --verify-runs
@@ -68,7 +69,7 @@ jobs:
             python "$TOOLS/check_evidence.py" --root pr validate --all
             python "$TOOLS/check_evidence.py" --root pr manifest
           fi
-          python "$TOOLS/build_progress.py" --root pr
+          python "$TOOLS/build_progress.py" --root pr --check
 
   founder-approval:
     name: founder-approval
@@ -97,6 +98,6 @@ jobs:
           PR_NUMBER: ${{ github.event.pull_request.number }}
         run: |
           TOOLS=trusted/tools
-          [ -f "$TOOLS/check_evidence.py" ] || TOOLS=pr/tools
+          if [ ! -f "$TOOLS/check_evidence.py" ]; then echo "::error::tools missing on the base branch"; exit 1; fi
           python "$TOOLS/check_evidence.py" --root pr approval --pr "$PR_NUMBER" \
             --repo "$GITHUB_REPOSITORY" --founder "$FOUNDER_LOGIN" --second "$SECOND_OWNER_LOGIN"

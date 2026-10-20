@@ -4,7 +4,15 @@
     "failIfUnavailable": true,
     "allowUnsandboxedCommands": false,
     "network": {
-      "strictAllowlist": true
+      "strictAllowlist": true,
+      "allowedDomains": [
+        "github.com",
+        "api.github.com",
+        "*.githubusercontent.com",
+        "pypi.org",
+        "files.pythonhosted.org",
+        "connect.squareupsandbox.com"
+      ]
     },
     "filesystem": {
       "denyRead": [

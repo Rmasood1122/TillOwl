@@ -8,8 +8,8 @@ The founder approved the outline on Oct 20, 2026 ("Approve all"). "Founder asked
 
 | Topic | Answer | How it was set |
 |---|---|---|
-| Managed PostgreSQL (T9) | **Render Postgres**, one instance for staging and one for production (design choice). Paid plan needed: point-in-time recovery is "Past 3 days" on Hobby, "Past 7 days" on Pro or higher, none on Free; a restore creates a new instance ([Render backups](https://render.com/docs/postgresql-backups)). External connections are TLS with a per-database IP allowlist, default `0.0.0.0/0` ([Render connecting](https://render.com/docs/postgresql-creating-connecting)). Price: TBD — not in sources (D13). | Founder asked me to pick |
-| Backup and PITR retention cap in the owner's spike authorization (T15-related) | **14 days.** Render Pro PITR is 7 days and logical exports are kept 7 days, both inside the cap. | Founder |
+| Managed PostgreSQL (T9) | **Render Postgres**, one instance for staging and one for production (design choice). Paid plan needed. Render's docs (unverified candidate until STEP-09 and STEP-13 confirm it) say point-in-time recovery is "Past 3 days" on Hobby, "Past 7 days" on Pro or higher, none on Free; a restore creates a new instance ([Render backups](https://render.com/docs/postgresql-backups)). External connections are TLS with a per-database IP allowlist, default `0.0.0.0/0` ([Render connecting](https://render.com/docs/postgresql-creating-connecting)). Price: TBD — not in sources (D13). | Founder asked me to pick |
+| Backup and PITR retention cap in the owner's spike authorization (T15-related) | **14 days.** Render's docs give Pro PITR as 7 days and logical exports as kept 7 days (unverified candidate until STEP-13), both inside the cap. | Founder |
 | Email vendor (T5) | **Resend** (unverified candidate; its data terms are recorded in STEP-04) | Founder |
 | Accounts we already have | **Render only.** No Square developer account, no Square production seller account of our own. | Founder |
 | Long-lead registrations | **Twilio 10DLC starts now (STEP-03). Square app approval (T1) starts after the sandbox spike (STEP-15).** | Founder |
@@ -30,6 +30,7 @@ The founder approved the outline on Oct 20, 2026 ("Approve all"). "Founder asked
 3. STEP-06 now also collects the owner's written support-access permission (needed for paper T16 entry), so counsel reviews it under T17a.
 4. STEP-41 (cost) became gate kind `human`: a metered estimate needs real model calls on synthetic flags, which CI may not make.
 5. New founder decisions: D15 (legal entity), D16 (RK1 thresholds), D17 (gh on macOS), D18 (staging database exposure).
+6. After an independent review: STEP-35 also depends on STEP-32 (the mapping); STEP-20 lists STEP-11 directly; STEP-40 depends on STEP-41, which saves the real-model sample outputs counsel reviews; STEP-24 and STEP-31 became ci_staging, so scenarios 1 and 2 run on staging; STEP-22's gate adds the notice-export receipt; steps 31–43 carry `runs_if: "GO"`.
 
 ## 2. Strategy
 
@@ -37,7 +38,7 @@ We build the cheapest proof that the data and the law allow a useful digest befo
 
 ## 3. Step table
 
-Gate commands use `pytest -c pytest.ini --rootdir=. tests/gates/step_NN` (shortened below to `pytest step_NN`); the status files carry the full command. `done_requires` lists steps that must be done before the step's done PR merges but not before work starts. Sizes: S < half a day, M ≈ one day, W waits on someone outside the team. Assignee is blank for every step until the founder fills it in.
+Gate commands use `pytest -c pytest.ini --rootdir=. tests/gates/step_NN` (shortened below to `pytest step_NN`); `check_artifact --label X --role Y` is short for `python tools/check_artifact.py --step STEP-NN --label X --role Y`, written in exactly that form with no other flags (the founder's run adds `--date` and staff counts, which `check_evidence.py` accepts). The status files carry the full commands. `done_requires` lists steps that must be done before the step's done PR merges but not before work starts. Sizes: S < half a day, M ≈ one day, W waits on someone outside the team. Assignee is blank for every step until the founder fills it in.
 
 | ID | Title | Track | Lane | Gate kind | Outcome | Gate | Depends on | Done requires | Size |
 |---|---|---|---|---|---|---|---|---|---|
@@ -45,10 +46,10 @@ Gate commands use `pytest -c pytest.ini --rootdir=. tests/gates/step_NN` (shorte
 | 02 | Counsel review T17a | human | legal | human | Counsel's signed review of: notice text, owner's spike authorization (incl. roster-read scope and support-access permission), DPA, and whether pre-notice history may feed per-login baselines | `python tools/check_artifact.py --step STEP-02 --label counsel_t17a --role counsel` | — | 01 | W |
 | 03 | Twilio 10DLC and the owner's SMS opt-in (T6) | human | vendor | human | 10DLC approved; approval time, message limits and Twilio data terms on file; owner's opt-in on file | `check_artifact --label sms_optin --role owner && --label tendlc_approval --role vendor && --label terms_t6 --role vendor` | — | — | W |
 | 04 | Vendor data terms: model vendor no-training (T8), email (T5) | human | vendor | human | Terms on file, or the founder's written template-only decision for T8 (D11) | `check_artifact --label terms_t5 --role vendor && --label terms_t8 --role vendor`; if D11 is chosen, a founder-approved gate-change PR swaps the second command to `--label t8_template_only --role founder` | — | — | S/W |
-| 05 | §52-c*2 notice given, acknowledged on paper, posted | human | legal | human | Notice version, acknowledgment batch (count only, plus absent and refused counts), dated posting photo; owner told staff nobody is punished just for data showing up | `check_artifact --label notice --role owner && --label ack_batch --role staff --count … && --label posting --role owner` | 02 | — | W |
+| 05 | §52-c*2 notice given, acknowledged on paper, posted | human | legal | human | Notice version, acknowledgment batch (count only, plus absent and refused counts), dated posting photo; owner told staff nobody is punished just for data showing up | `check_artifact --label notice --role owner && --label ack_batch --role staff && --label posting --role owner` | 02 | — | W |
 | 06 | Owner signs the spike authorization and support-access permission | human | legal | human | Authorization names scopes, HMAC hashing, deletion check and the 14-day backup cap; written support-access permission for paper acknowledgment entry | `check_artifact --label authorization --role owner && --label support_permission --role owner` | 02 | — | W |
 | 07 | Design Partner Agreement and pass line signed | human | legal | human | DPA with no-training and 30-day CSV export promises; pass line with both V1 variants and the T11 0.5–1 point rule; up-front 10–20% invoice issued | `check_artifact --label dpa --role owner && --label pass_line --role owner && --label upfront_invoice --role founder` | 02 | — | W |
-| 08 | Repo skeleton | build | platform | ci_fixture | `tillowl` package, full v1 schema with RLS, insert-only audit role and `audit()`, business-day helper, migration runner, tests for the governance tools | `pytest step_08` | 01 | — | M |
+| 08 | Repo skeleton | build | platform | ci_fixture | `tillowl` package, full v1 schema with RLS, insert-only audit role and `audit()`, business-day helper, migration runner, tests for the governance tools. The session also runs the gate locally inside its sandbox (G7) and pastes that output into the PR description | `pytest step_08` | 01 | — | M |
 | 09 | Staging deploy, fake-data cron, alerts | build | platform | ci_staging | Console health check on staging, one cron run on fake data, per-run schema, cron-failure email alerts (stubbed in CI), missed-run watchdog | `pytest step_09` | 08 | — | M |
 | 10 | Owner sign-in with TOTP two-factor | build | console | ci_fixture | Owner-only sign-in; failed and denied attempts audit-logged; no staff accounts exist | `pytest step_10` | 08 | — | M |
 | 11 | Square OAuth connect | build | connector | ci_staging | Authorize, exchange, refresh ≤ 7 days, AES-256-GCM token storage, callback in the console, refresh-failure flag for scenario 4; Square mocked in CI | `pytest step_11` | 01, 09, 10 | — | M |
@@ -60,32 +61,32 @@ Gate commands use `pytest -c pytest.ini --rootdir=. tests/gates/step_NN` (shorte
 | 17 | Provision the friend's tenant and owner two-factor | build | platform | production_job | Pilot tenant; owner invited and enrolled in TOTP | `python -m tillowl.jobs.provision_tenant --kind pilot && python -m tillowl.jobs.onboarding_report --tenant pilot --expect-2fa` | 06, 13 | — | S |
 | 18 | Go/no-go criteria accepted | human | gate | human | Founder edits and commits `go-no-go-criteria.md` without the DRAFT marker, through a gate-change PR | `python tools/check_evidence.py criteria` | — | 01 | S |
 | 19 | Live-spike job code | build | connector | ci_fixture | `square_live_report` (field names, types and counts only; HMAC in memory) and `verify_deleted`; each V-result audit-logged | `pytest step_19` | 11 | — | M |
-| 20 | Run the read-only live spike | build | connector | production_job | V1–V8 each RETURNED / NOT_RETURNED / PARTIAL in `findings/square-fields.md`; spike data deleted; last-backup expiry recorded; OAuth kept or revoked (D7) | `python -m tillowl.jobs.square_live_report --tenant pilot --check && python -m tillowl.jobs.verify_deleted --tenant pilot --scope spike` | 02, 05, 06, 13, 15, 16, 17, 18, 19 | — | S |
+| 20 | Run the read-only live spike | build | connector | production_job | V1–V8 each RETURNED / NOT_RETURNED / PARTIAL in `findings/square-fields.md`; spike data deleted; last-backup expiry recorded; OAuth kept or revoked (D7) | `python -m tillowl.jobs.square_live_report --tenant pilot --check && python -m tillowl.jobs.verify_deleted --tenant pilot --scope spike` | 02, 05, 06, 11, 13, 15, 16, 17, 18, 19 | — | S |
 | 21 | Go/no-go decision recorded | human | gate | human | GO or NO-GO judged under RK1 against the accepted criteria; `decision` set in its status file | `python tools/check_evidence.py decision` | 20 | — | S |
-| 22 | No-go exit (runs only on NO-GO) | build | platform | production_job | Revoke OAuth, export notice and acknowledgment records to the owner, delete tenant data except spike/deletion audit rows, verify, settle the fee | `python -m tillowl.jobs.exit_tenant --tenant pilot && python -m tillowl.jobs.verify_deleted --tenant pilot --scope tenant && python tools/check_artifact.py --step STEP-22 --label invoice_settlement --role founder` | 21 | — | M |
+| 22 | No-go exit (runs only on NO-GO) | build | platform | production_job | Revoke OAuth, export notice and acknowledgment records to the owner, delete tenant data except spike/deletion audit rows, verify, record `backup_expires` for the last backup holding the data, settle the fee | `python -m tillowl.jobs.exit_tenant --tenant pilot && python -m tillowl.jobs.verify_deleted --tenant pilot --scope tenant && python tools/check_artifact.py --step STEP-22 --label notice_export --role owner && python tools/check_artifact.py --step STEP-22 --label invoice_settlement --role founder` | 21 | — | M |
 | 23 | Fact templates and template manifest | build | digest | ci_fixture | Fixed fact lines incl. both fallback sentences; `MANIFEST.json` | `pytest step_23` | 08 | — | S |
-| 24 | Digest fact checker and deny-list | build | digest | ci_fixture | Every number, time and name must be in the stored flag; deny-list; failing sentences replaced by the template line (scenario 2) | `pytest step_24` | 23 | — | M |
+| 24 | Digest fact checker and deny-list | build | digest | ci_staging | Every number, time and name must be in the stored flag; deny-list; failing sentences replaced by the template line (scenario 2) | `pytest step_24` | 23 | — | M |
 | 25 | Explanation service, model stubbed | build | explain | ci_fixture | Pinned `claude-haiku-5-5`, low effort, login codes only, prompt < 100k tokens, all output tokens metered; production calls behind the T8 flag | `pytest step_25` | 08 | — | M |
 | 26 | Digest build and delivery | build | digest | ci_staging | Owner only; email first; SMS behind a flag until STEP-03; digest log; reconnect message (scenario 4); vendors stubbed in CI | `pytest step_26` | 11, 24, 25 | — | M |
 | 27 | Console: notice records, acknowledgment entry, support access | build | console | ci_fixture | Notice versions; acknowledgment entry and mapping screen; time-boxed owner grant for support access; every action audit-logged | `pytest step_27` | 10 | — | M |
 | 28 | Console: shift windows and digest settings | build | console | ci_fixture | Windows in the restaurant's time zone, crossing midnight allowed; settings audit-logged | `pytest step_28` | 10 | — | S |
 | 29 | CSV export and termination path | build | console | ci_fixture | 30-day CSV export of all flagged events; deletion per contract; audit-logged | `pytest step_29` | 10 | — | M |
 | 30 | Audit-log coverage and scenario 3 | build | platform | ci_staging | Every listed event type writes an audit row; cross-tenant reads return zero rows | `pytest step_30` | 19, 26, 27, 28, 29 | — | S |
-| 31 | Square event ingestion | build | connector | ci_fixture | Nightly and date-range pull, events tagged with business day, shift window and (acknowledged) login; missed day re-pulled (scenario 1); a branch per V-item | `pytest step_31` | 11, 21, 27, 28 | — | M |
+| 31 | Square event ingestion | build | connector | ci_staging | Nightly and date-range pull, events tagged with business day, shift window and (acknowledged) login; missed day re-pulled (scenario 1); a branch per V-item | `pytest step_31` | 11, 21, 27, 28 | — | M |
 | 32 | Roster-read job and acknowledgment mapping | build | console | ci_fixture | Reads Square team-member ids and display names for the mapping only; display names never leave the console | `pytest step_32` | 21, 27 | — | M |
 | 33 | Pilot onboarding on production | build | platform | production_job | Release deployed; roster read; owner sets shift windows; founder enters paper acknowledgments and maps them under the support-access grant | `python -m tillowl.jobs.roster_read --tenant pilot && python -m tillowl.jobs.onboarding_report --tenant pilot` | 05, 07, 13, 21, 28, 32 | — | S |
 | 34 | 30-day history pull (V8) | build | connector | production_job | 30 days of events; logins stripped for unacknowledged logins and, per T17a, for pre-notice dates | `python -m tillowl.jobs.history_pull --tenant pilot --days 30 && python -m tillowl.jobs.onboarding_report --tenant pilot --history` | 31, 33 | — | S |
-| 35 | Ratio rules and baselines | build | rules | ci_fixture | Counts and ratios per login and shift window; baselines for acknowledged logins only | `pytest step_35` | 21, 28, 31 | — | M |
+| 35 | Ratio rules and baselines | build | rules | ci_fixture | Counts and ratios per login and shift window; baselines for acknowledged logins only | `pytest step_35` | 21, 28, 31, 32 | — | M |
 | 36 | Flags A: cancelled orders, item voids, approval codes, no-sale opens (V1–V4, V6) | build | rules | ci_fixture | Acknowledgment gate on every flag; RETURNED and NOT_RETURNED branches | `pytest step_36` | 32, 35 | — | M |
 | 37 | Flags B: comps, discounts, refunds (V5, V7) and the ranker | build | rules | ci_fixture | Ranked flags with time-stamped evidence | `pytest step_37` | 36 | — | M |
 | 38 | V-item branches in templates and checker | build | digest | ci_fixture | Unconfirmed fields left out or the fallback wording used | `pytest step_38` | 21, 24, 37 | — | S |
 | 39 | Pass-line measurement | build | rules | ci_fixture | Voids + comps + discounts as % of net sales (or the DPA substitute), 30 days before and 60 after; the D10 opening measure | `pytest step_39` | 21, 31 | — | S |
-| 40 | Counsel review T17b | human | legal | human | Counsel signs off templates, explanation prompt, deny-list and sample outputs; manifest hash recorded | `check_artifact --step STEP-40 --label counsel_t17b --role counsel && python tools/check_evidence.py manifest` | 25, 26, 38 | — | W |
-| 41 | Metered cost estimate (T9, scenario 5) | build | platform | human | Real model calls on synthetic flags measure tokens in, out and thinking; SMS segments; Render web, cron and both databases at current prices; total ≤ the lean line | `python -m tillowl.jobs.cost_estimate --sample tests/fixtures/cost_sample.json --live --check` | 26, 37 | — | S |
+| 40 | Counsel review T17b | human | legal | human | Counsel signs off templates, explanation prompt, deny-list and the real-model sample outputs STEP-41 saved; manifest hash recorded | `check_artifact --step STEP-40 --label counsel_t17b --role counsel && python tools/check_evidence.py manifest` | 25, 26, 38, 41 | — | W |
+| 41 | Metered cost estimate (T9, scenario 5) | build | platform | human | Real model calls on synthetic flags measure tokens in, out and thinking, and save the outputs as the T17b samples (`docs/build/findings/llm-samples.md`, synthetic data only); SMS segments; Render web, cron and both databases at current prices; total ≤ the lean line. Runs in the founder's terminal with a non-production Anthropic key | `python -m tillowl.jobs.cost_estimate --sample tests/fixtures/cost_sample.json --live --check` | 26, 37 | — | S |
 | 42 | Billing with one-click cancel | build | console | ci_fixture | Needed by day 90, not by STEP-43; provider is D12 | `pytest step_42` | 07, 10 | — | M |
 | 43 | Pilot-readiness gate | human | gate | human | All pilot-gate conditions hold (§5); real SMS incl. the reconnect text to the founder's phone; then the founder enables the nightly, explanation and digest jobs | `python tools/check_evidence.py pilot-gate && python -m tillowl.jobs.health_check --env production && python -m tillowl.jobs.send_test --env staging --channel sms --to founder` | 03, 04, 05, 07, 15, 20, 21, 26, 30, 33, 34, 36, 37, 38, 39, 40, 41 | — | S |
 
-**Critical path:** 01 → 08 → 09 → 11 → 12 → 13 → 15 (T1 wait) → 16 → 20 → 21 → 31 → 35 → 36 → 37 → 38 → 40 (counsel wait) → 43. The counsel branch 02 → 05/06 → 20 joins at the spike and is likely the longer wait. External waits on this path: T1 approval, counsel T17a and T17b, and 10DLC (STEP-03 feeds 43). The 6–8 week target holds only if counsel and Square approval each answer within about two weeks; nothing in the sources says they will.
+**Critical path:** 01 → 08 → 09 → 11 → 12 → 13 → 15 (T1 wait) → 16 → 20 → 21 → 31 → 35 → 36 → 37 → 41 → 40 (counsel wait) → 43; STEP-38 (after 37) also feeds 40. The counsel branch 02 → 05/06 → 20 joins at the spike and is likely the longer wait. External waits on this path: T1 approval, counsel T17a and T17b, and 10DLC (STEP-03 feeds 43). The 6–8 week target holds only if counsel and Square approval each answer within about two weeks; nothing in the sources says they will.
 
 **T1 dependency (D5).** Default branch, written into the status files: STEP-15 depends on 01 and 13, and STEP-16 depends on 15. If STEP-01 finds that Square approval requires a working production connect, the founder approves a gate-change PR that switches to: STEP-16 depends on 14 only, and STEP-15 depends on 16.
 
@@ -132,6 +133,7 @@ graph TD
   S11 --> S19[19 Spike job code]
   S11 --> S26[26 Digest delivery]
   S11 --> S31[31 Ingestion]
+  S11 --> S20
   S12 --> S13
   S13 --> S14[14 Own tenant]
   S13 --> S15(15 T1 resolved)
@@ -179,6 +181,7 @@ graph TD
   S31 --> S35
   S31 --> S39
   S32 --> S33
+  S32 --> S35
   S32 --> S36
   S33 --> S34
   S33 --> S43
@@ -193,6 +196,7 @@ graph TD
   S38 --> S43
   S39 --> S43
   S40 --> S43
+  S41 --> S40
   S41 --> S43
   S43(43 Pilot-readiness gate)
   class S02,S03,S04,S05,S06,S07,S12,S15,S40,S41 human;
@@ -217,7 +221,7 @@ graph TD
 
 **STEP-43 conditions** (each checked by `check_evidence.py pilot-gate` or the human-confirmed send):
 
-1. Quality scenarios 1–4 pass on staging: their gate files (STEP-31, 24, 30, 11 and 26) are green in the latest staging run on main.
+1. Quality scenarios 1–4 pass on staging: the ci_staging gates of STEP-31 (scenario 1), 24 (scenario 2), 30 (scenario 3), 11 and 26 (scenario 4) are green in the latest staging push run on main.
 2. The same release is deployed to production and its health check passes.
 3. Every Slide 26 "Before day one" item and Slide 30 before-day-one item is closed: STEP-07 (DPA, fee, pass line), 05 (notices), 16 and 20 (OAuth, not a personal token), 20 (V1–V8 tested), 34 (30-day history), 15 (T1), 07 (T11), 05 and 33 (T16), 02 and 40 (T17).
 4. T17b is signed (STEP-40), and the template manifest still matches its recorded hashes.
@@ -250,13 +254,14 @@ These names are fixed now so parallel steps meet in the middle. Changing one is 
 
 - **Package:** `tillowl/` (Python 3.12, design choice). Subpackages: `console/` (FastAPI app), `square/` (`oauth.py`, `client.py`, `ingest.py`, `roster.py`, `live_report.py`), `rules/` (`ratios.py`, `baselines.py`, `flags.py`, `ranker.py`, `passline.py`), `explain/`, `digest/` (`templates/`, `checker.py`, `build.py`, `deliver.py`), `jobs/` (one module per command), plus `db.py`, `audit.py`, `crypto.py`, `business_day.py`, `config.py`.
 - **Jobs:** `python -m tillowl.jobs.<name> [--env staging|production] [--tenant own|pilot] …`. Every job prints only lines in the evidence grammar (`docs/build/evidence/README.md`) and ends with `exit_code: N`. Jobs: `health_check`, `restore_check`, `redirect_check`, `refresh_tokens`, `oauth_status`, `oauth_check`, `provision_tenant`, `onboarding_report`, `square_live_report`, `verify_deleted`, `roster_read`, `history_pull`, `nightly_pull`, `run_rules`, `run_explain`, `run_digest`, `exit_tenant`, `cost_estimate`, `send_test`, `migrate`, `watchdog`.
+- **Where jobs run:** production jobs run as Render one-off jobs launched by the founder, and their evidence carries `job_id`. STEP-12's commands run as one-off jobs on the staging service. STEP-41's `cost_estimate` runs in the founder's terminal. Human gates made only of job commands need no `role` or `job_id` line; the founder's PR approval shows who ran them.
 - **Job switches:** `TILLOWL_JOBS_ENABLED` (comma list) on each Render service; production holds `refresh_tokens` only until STEP-43. `TILLOWL_LLM_ENABLED=0` in production until T8 or D11.
-- **Migrations:** `migrations/NNNN_name.sql`, applied in lexical order, each in its own transaction, recorded in `schema_migrations`. Fixed names: `migrations/0002_rls.sql` and `migrations/0003_audit_role.sql` (G1-protected once created). Roles are created idempotently, because staging gates share one cluster across per-run schemas. Migrations never hard-code a schema name.
+- **Migrations:** `migrations/NNNN_name.sql`, applied in lexical order, each in its own transaction, recorded in `schema_migrations`. Fixed names: `migrations/0002_rls.sql` and `migrations/0003_audit_role.sql` (G1-protected once created). Roles are created idempotently, because staging gates share one cluster across per-run schemas. Migrations never hard-code a schema name. Whether Render's database user may `CREATE ROLE` is TBD — not in sources; STEP-09 checks it and, if not, the founder creates the roles once by hand. Tenant tables use `FORCE ROW LEVEL SECURITY` (scenario 3 tests it as the owning role too).
 - **Templates:** `tillowl/digest/templates/` holds the fact templates, the explanation prompt and the deny-list; `tillowl/digest/templates/MANIFEST.json` maps each file to its SHA-256. CI fails if a file in that folder is missing from the manifest or its hash differs; after STEP-40 is done, CI also fails if the manifest's own hash differs from STEP-40's evidence.
 - **Spike scripts:** `spikes/square_sandbox.py` (STEP-01 only; standard library, personal sandbox token from `SQUARE_SANDBOX_TOKEN`).
 - **Findings:** `docs/build/findings/square-sandbox.md` (STEP-01), `docs/build/findings/square-fields.md` (STEP-20). Field names, types and counts only.
 - **Gate files:** `tests/gates/step_NN/test_*.py` and fixtures beside them, named exactly in `docs/build/gates/STEP-NN.txt`. Production-job and spike steps also list the job module whose `--check` is the gate, so CI freezes it after the step is done.
-- **Status files:** `docs/build/status/STEP-NN.json` with the fields in the planning prompt plus optional `runs_if` (STEP-22: `"NO-GO"`), `decision` (STEP-21), `findings_path` (STEP-01, 20) and `blocked_reason`. `progress.json` is generated by `tools/build_progress.py` in CI and is gitignored.
+- **Status files:** `docs/build/status/STEP-NN.json` with the fields in the planning prompt plus optional `runs_if` (STEP-22: `"NO-GO"`; steps 31–43: `"GO"`), `decision` (STEP-21), `findings_path` (STEP-01, 20) and `blocked_reason`. `progress.json` is generated by `tools/build_progress.py` in CI and is gitignored.
 - **Live-spike counts:** `square_live_report` prints `count:` lines with units `orders`, `cancelled_orders`, `comps`, `discounts`, `refunds`, `no_sale_opens`, `item_voids` and `logins_hashed`, so the go/no-go thresholds (D16) can be read from STEP-20's evidence.
 - **Evidence grammar and tools:** `docs/build/evidence/README.md`; `tools/check_evidence.py`, `tools/check_artifact.py`, `tools/build_progress.py` (installed from `docs/build/proposed/tools/`). Human gates use artifact files at `$PRIVATE_EVIDENCE_DIR/STEP-NN/<label>.<ext>`.
 - **Local test database:** the root `conftest.py` starts a throwaway PostgreSQL with `initdb`/`pg_ctl` on 127.0.0.1 inside the pytest process tree and applies `migrations/` to a template database; each test gets a fresh copy. Staging gates use `staging_schema`, which needs `STAGING_DATABASE_URL` and creates `ci_<run>_<attempt>_<step>`.
@@ -297,8 +302,8 @@ Toast and the Toast Connector; 7shifts, the Labor Connector and timecards (Agent
 
 ## 10. Unknowns carried into the steps
 
-- Square: scope names, production approval, sandbox authorize flow, whether V1–V8 come back → STEP-01, 15, 20. Square's docs say the sandbox base URL is `https://connect.squareupsandbox.com` and that Square Point of Sale and hardware "cannot be used in the Sandbox" ([Square Sandbox](https://developer.squareup.com/docs/devtools/sandbox/overview)), so no-sale opens (V6) and item voids on paid checks (V3) may be NOT_OBSERVABLE_IN_SANDBOX and only the live spike can answer them.
-- Render: one-off jobs are created through the API or `render jobs create <serviceID> --start-command …` ([Render one-off jobs](https://render.com/docs/one-off-jobs), [CLI](https://render.com/docs/cli-reference)); the docs name no dashboard button for creating one. Failed cron runs notify by email and Slack; failed one-off jobs notify by Slack only ([Render notifications](https://render.com/docs/notifications)). Missed (never-started) runs are not covered by Render, so `watchdog` runs inside the token-refresh cron and emails the founder when another job's last success is older than its schedule allows (design choice).
+- Square: scope names, production approval, sandbox authorize flow, whether V1–V8 come back → STEP-01, 15, 20. Square's docs (unverified candidate until STEP-01) say the sandbox base URL is `https://connect.squareupsandbox.com` and that Square Point of Sale and hardware "cannot be used in the Sandbox" ([Square Sandbox](https://developer.squareup.com/docs/devtools/sandbox/overview)), so no-sale opens (V6) and item voids on paid checks (V3) may be NOT_OBSERVABLE_IN_SANDBOX and only the live spike can answer them.
+- Render (unverified candidate until STEP-13 uses it): one-off jobs are created through the API or `render jobs create <serviceID> --start-command …` ([Render one-off jobs](https://render.com/docs/one-off-jobs), [CLI](https://render.com/docs/cli-reference)); the docs name no dashboard button for creating one. Failed cron runs notify by email and Slack; failed one-off jobs notify by Slack only ([Render notifications](https://render.com/docs/notifications)). Missed (never-started) runs are not covered by Render, so `watchdog` runs inside the token-refresh cron and emails the founder when another job's last success is older than its schedule allows (design choice).
 - GitHub-hosted runner IP ranges change weekly and GitHub does "not recommend" them as allowlists ([runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)); see D18.
 - Prices for Render web, cron and Postgres, Resend, Twilio and Haiku 5.5 are re-checked in STEP-41; any price not on a current official page is TBD — not in sources.
 
@@ -308,7 +313,7 @@ Each is a choice the sources leave open. Accepting this plan accepts them; strik
 
 **Stack and repo**
 1. Python 3.12; FastAPI with server-rendered HTML for the console; psycopg 3; plain numbered SQL migrations with a 30-line runner; pytest; httpx for Square, Twilio and Resend calls; the official `anthropic` SDK.
-2. Render Postgres for staging and production, on a plan with 7-day PITR (inside the 14-day cap). Staging is a second database, counted in T9 and STEP-41.
+2. Render Postgres for staging and production, on a plan with 7-day PITR (inside the 14-day cap; PITR length is an unverified candidate until STEP-13). Staging is a second database, counted in T9 and STEP-41.
 3. Repo made private on a paid GitHub plan (D3 decides Pro or Team).
 4. Two-factor owner sign-in by TOTP (`pyotp`), so it does not depend on 10DLC; recovery codes printed once at enrollment.
 5. Tokens stored with AES-256-GCM (`cryptography`), key from the host's secret store; HMAC-SHA256 for hashing logins in the spike, with its own key.
@@ -339,11 +344,16 @@ Each is a choice the sources leave open. Accepting this plan accepts them; strik
 **Operations**
 25. Production environment separate from staging: own secrets, AES key and HMAC key; auto-deploy off; deploys manual and founder-confirmed; only `refresh_tokens` (with `watchdog`) scheduled until STEP-43.
 26. Production database external access closed (no IP allowlist entries); jobs use the internal URL.
-27. Cron failures alert the founder by Render's email notifications, set to "Only failure notifications"; missed runs alert through `watchdog`.
-28. Backup is Render PITR (7 days); the restore test restores to a new instance, compares a canary table's row count and hash, then the founder deletes the restored instance.
-29. One-off production jobs are launched by the founder with `render jobs create` from the founder's own terminal; Claude sessions never hold the Render API key.
+27. Cron failures alert the founder by Render's email notifications, set to "Only failure notifications" (unverified candidate until STEP-09); missed runs alert through `watchdog`.
+28. Backup is Render PITR (7 days); the restore test restores to a new instance (both unverified candidates until STEP-13), compares a canary table's row count and hash, then the founder deletes the restored instance.
+29. One-off production jobs are launched by the founder with `render jobs create` (unverified candidate until STEP-13) from the founder's own terminal; Claude sessions never hold the Render API key.
 30. Production OAuth check on our own production seller account before the friend's; our own tenant is provisioned first.
 31. Billing is built by day 90 (STEP-42); the up-front fee is invoiced outside the product.
+
+**Added after review**
+32. The template manifest is editable with code-owner review until T17b is done, then only through a gate-change PR (G1 lists it as protected throughout; this lets STEP-23 and STEP-38 build it without gate-change PRs, and T17b reviews the result).
+33. Every migration is code-owned; once STEP-08 is done, a migration that touches row-level security, policies, grants, roles or `audit_log` needs a gate-change PR. Tenant tables use `FORCE ROW LEVEL SECURITY`, so the table owner can't bypass the policies.
+34. Steps 31–43 carry `runs_if: "GO"` and STEP-22 carries `runs_if: "NO-GO"`; CI refuses to start or finish them against the other decision.
 
 ## 12. Decisions the founder must make
 

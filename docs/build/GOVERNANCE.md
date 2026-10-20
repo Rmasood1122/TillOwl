@@ -37,11 +37,12 @@ Do these in order. Record each smoke test's result in the install log at the end
 3. Add Ahmad317-Engineer and each engineer as collaborators with write access. Code owners "must have write permissions for the repository" ([code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)).
 4. From an engineer's account, open the install PR on branch `gate-change/install-governance`. It copies from `docs/build/proposed/`:
    `tools/check_evidence.py`, `tools/check_artifact.py`, `tools/build_progress.py`, `pytest.ini`, `conftest.py`, `.github/workflows/governance.yml`, `.github/workflows/ci.yml`, `.github/workflows/staging.yml`, `.github/CODEOWNERS`, `.claude/settings.json`, `CLAUDE.md`, `.gitignore`.
-   On this one PR the `governance` job uses the PR's own copy of the tools, because the base branch has none yet (bootstrap; see G1 residual risk). Pin each `uses:` action to a full commit SHA before merging (look up the current SHAs on the actions' release pages); the proposed files use version tags.
-5. Wait for `governance`, `founder-approval` and `tests` to go green on the install PR. The founder approves, then re-runs `founder-approval` (see "The founder's approval ritual"). Merge.
-6. Turn on the branch protection settings in the table above and select the three required checks.
-7. Create the `staging` environment: deployment branches = `main` only; add its secrets and variable once STEP-09 creates the Render staging service (until then the staging workflow prints "not configured yet" and passes).
-8. Run the Day 1 smoke tests: G1-a, G1-b, G2-a, G2-b, G2-c, G3-a, G6-a.
+   Pin each `uses:` action to a full commit SHA before merging (look up the current SHAs on the actions' release pages); the proposed files use version tags.
+5. On the install PR only `tests` runs. `governance` and `founder-approval` run on `pull_request_target`, which uses the workflow file from the base branch, and `main` has none yet. So both code owners review the install PR line by line against `docs/build/proposed/`, the founder approves, and it merges with `tests` green. Branch protection is not on yet; this is the one PR judged by review alone.
+6. Open the smoke-test PRs G1-a and G2-a. They are the first runs of `governance` and `founder-approval`, and the first runs that let GitHub list those checks.
+7. Turn on the branch protection settings in the table above and select the three required checks (each must have succeeded within the past seven days).
+8. Create the `staging` environment: deployment branches = `main` only; add its secrets and variable once STEP-09 creates the Render staging service (until then the staging workflow prints "not configured yet" and passes).
+9. Run the remaining Day 1 smoke tests: G1-b, G2-b, G2-c, G3-a, G6-a.
 
 **Day 2: Claude Code on every developer machine** (repeat per operating system, D2)
 
@@ -54,7 +55,7 @@ Do these in order. Record each smoke test's result in the install log at the end
 
 **Day 3: Render, evidence folder, close-out**
 
-1. Render workspace notifications: set the level to "Only failure notifications" so a failed cron run emails the founder ([Render notifications](https://render.com/docs/notifications)). Failed one-off jobs notify by Slack only, so the founder watches each one-off job's status directly.
+1. Render workspace notifications (unverified candidate, from [Render notifications](https://render.com/docs/notifications); confirm in the dashboard): set the level to "Only failure notifications" so a failed cron run emails the founder. That page says failed one-off jobs notify by Slack only, so the founder watches each one-off job's status directly.
 2. Create `PRIVATE_EVIDENCE_DIR` on the founder's machine, outside every git checkout, on an encrypted disk, readable only by the founder (`chmod 700`).
 3. Run smoke test G5-b.
 4. Fill in the install log and commit it on branch `gate-change/governance-install-log` (this file is not protected, but keeping the log on the gate-change path keeps one history).
@@ -67,7 +68,8 @@ Do these in order. Record each smoke test's result in the install log at the end
   - a change to any `tests/gates/step_NN/` file once STEP-NN is done on the base branch;
   - any file in `tests/gates/step_NN/` not named in `docs/build/gates/STEP-NN.txt`;
   - edits to `migrations/*_rls*.sql` and `migrations/*_audit_role*.sql` after they first land;
-  - edits to `tillowl/digest/templates/MANIFEST.json` after T17b;
+  - once STEP-08 is done, any other migration that touches row-level security, policies, grants, roles or `audit_log` (CODEOWNERS also covers all of `migrations/`);
+  - edits to `tillowl/digest/templates/MANIFEST.json` after T17b. Before T17b, steps 23 and 38 edit it with code-owner review, which is a design choice listed in BUILD_PLAN §11; G1 asks for gate-change protection throughout;
   - gate-listed job modules of done steps;
   - findings of done steps;
   - any pytest configuration outside the root `pytest.ini` (a nested `pytest.ini`, a `tox.ini` or `setup.cfg` pytest section, or a `[tool.pytest*]` table in any `pyproject.toml`);
@@ -80,7 +82,7 @@ Do these in order. Record each smoke test's result in the install log at the end
 - [About code owners](https://docs.github.com/en/repositories/managing-your-repositorys-settings-and-features/customizing-your-repository/about-code-owners)
 - [Events that trigger workflows: pull_request_target](https://docs.github.com/en/actions/reference/workflows-and-actions/events-that-trigger-workflows#pull_request_target)
 
-**Install.** Day 1, steps 4–6.
+**Install.** Day 1, steps 4–7.
 
 **Smoke tests.**
 - **G1-a.** On a branch `test/g1`, append a comment to `tools/build_progress.py` and open a PR. Expect `governance` red, with "protected path changed; use a gate-change/ branch". Close the PR.
@@ -88,10 +90,10 @@ Do these in order. Record each smoke test's result in the install log at the end
 
 **Residual risk.**
 - **Gate-change PRs can change anything, including the checks themselves.** The only protection is the founder's review.
-- **The install PR is judged by its own tools.** This bootstrap gap closes once the tools are on `main`.
+- **The install PR is judged by no governance check**, only by both code owners' review and `tests` (install step 5). The workflows never fall back to a PR's own tools, because under `pull_request_target` that would run PR code.
 - **The `ci` workflow runs on `pull_request`, so a PR's own `ci.yml` runs.** A non-gate-change PR that edits `.github/` is rejected by `governance`, so this matters only for gate-change PRs.
 - **No hook checks local edits.** The ask rules in `.claude/settings.json` don't see writes made through Bash ([permissions](https://code.claude.com/docs/en/permissions)), so CI is the first enforcement.
-- **One `pull_request_target` behaviour is unverified.** Its check runs are expected to attach to the PR head and to be selectable as required checks, but the docs fetched don't state it; smoke tests G1-a/G1-b and install step 6 confirm it. If they don't, switch both jobs to `pull_request` (fallback). The residual risk then becomes that a gate-change PR could edit `governance.yml`, and CODEOWNERS review is the only guard.
+- **One `pull_request_target` behaviour is unverified.** Its check runs are expected to attach to the PR head and to be selectable as required checks, but the docs fetched don't state it; smoke tests G1-a/G1-b and install step 7 confirm it. If they don't, switch both jobs to `pull_request` (fallback). The residual risk then becomes that a gate-change PR could edit `governance.yml`, and CODEOWNERS review is the only guard.
 
 ## G2 Approvals
 
@@ -122,7 +124,7 @@ Do these in order. Record each smoke test's result in the install log at the end
 - [Approving a pull request with required reviews](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/reviewing-changes-in-pull-requests/approving-a-pull-request-with-required-reviews)
 - [Re-running workflows and jobs](https://docs.github.com/en/actions/how-tos/manage-workflow-runs/re-run-workflows-and-jobs)
 
-**Install.** Day 1, steps 3, 6.
+**Install.** Day 1, steps 3, 7.
 
 **Smoke tests.**
 - **G2-a.** An engineer opens a PR changing only `README.md`. Expect one approval from any other collaborator to be enough, and `founder-approval` to print "founder approval not required".
@@ -169,12 +171,12 @@ The `tests` job runs `pytest -c pytest.ini --rootdir=.` with `PYTEST_DISABLE_PLU
 - [Workflow syntax: permissions](https://docs.github.com/en/actions/reference/workflows-and-actions/workflow-syntax)
 - [About status checks](https://docs.github.com/en/pull-requests/collaborating-with-pull-requests/collaborating-on-repositories-with-code-quality-features/about-status-checks): "A job that is skipped will report its status as 'Success'", which is why no required job is conditional on PRs
 
-**Network to the staging database (T9, D18).** GitHub-hosted runner IP ranges are "updated once a week" and GitHub does "not recommend that you use these as allowlists" ([GitHub-hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)). Render Postgres accepts TLS connections on its external URL, with a per-database IP allowlist whose default is `0.0.0.0/0` ([Render connecting](https://render.com/docs/postgresql-creating-connecting)).
+**Network to the staging database (T9, D18).** GitHub-hosted runner IP ranges are "updated once a week" and GitHub does "not recommend that you use these as allowlists" ([GitHub-hosted runners](https://docs.github.com/en/actions/reference/runners/github-hosted-runners)). Render's docs say Render Postgres accepts TLS connections on its external URL, with a per-database IP allowlist whose default is `0.0.0.0/0` ([Render connecting](https://render.com/docs/postgresql-creating-connecting); unverified candidate until STEP-09 confirms it).
 - Proposed: keep `0.0.0.0/0` on **staging only**. Staging holds synthetic data, needs TLS and a strong generated password, and the URL lives only in the `staging` environment.
 - Production keeps external access closed.
 - The alternative is larger runners with static IPs, at a cost that is TBD — not in sources.
 
-**Install.** Day 1, steps 4–7.
+**Install.** Day 1, steps 4–8.
 
 **Smoke tests.**
 - **G3-a.** On a throwaway branch, add a status file through a `gate-change/g3-smoke` PR, then in a second PR mark it done with an evidence line `note: it works`. Expect `governance` red with "not in the evidence grammar". Close both PRs.
@@ -184,6 +186,8 @@ The `tests` job runs `pytest -c pytest.ini --rootdir=.` with `PYTEST_DISABLE_PLU
 - **Production-job and human evidence is only as true as the pasted output.** CI can't call Render (it holds no Render key), so `job_id` lines are checked for format only.
 - **A person's name could be mistyped as an identifier-shaped `field:` value.** The grammar can't tell a name from a field name.
 - **CI checks the order of cause and effect, not authorship.** An engineer who forges a run id still has to match a real green run on the right commit.
+- **The JUnit check stops accidents, not deliberate tampering.** PR code runs inside the same pytest process, so a test module could register hooks or rewrite `junit.xml`. Code review of every PR is the mitigation.
+- **Scenarios 1–4 on staging.** STEP-11, 24, 26, 30 and 31 are ci_staging steps, so their gates (which carry scenarios 4, 2, 4, 3 and 1) run in the staging workflow on `main`; `pilot-gate` checks those jobs in the latest push run. Their tests do not run on PRs, so a regression shows up after merge, on `main`.
 
 ## G4 Secrets
 
@@ -193,7 +197,7 @@ The `tests` job runs `pytest -c pytest.ini --rootdir=.` with `PYTEST_DISABLE_PLU
 - **Local sessions get only the Square sandbox token** (STEP-01) and vendor test credentials, exported in the developer's own shell for that session. They never go in `.env` files or committed settings, and never include the staging database URL.
 - **The sandbox can read most of the disk by default**, including "credential files such as `~/.ssh` and `~/.aws/credentials`" ([sandboxing](https://code.claude.com/docs/en/sandboxing)). Each developer's `~/.claude/settings.json` therefore:
   - adds `sandbox.filesystem.denyRead` and matching `Read(...)` deny rules for cloud, database, Render CLI, SSH and netrc credentials, and for `PRIVATE_EVIDENCE_DIR`. gh's own credentials are left readable, because opening PRs needs them.
-  - sets `sandbox.network.strictAllowlist: true`, so sandboxed commands can reach only the project's allowed domains (GitHub, PyPI, Square sandbox) instead of prompting. That setting has no effect in a repository's settings files.
+  - sets `sandbox.network.strictAllowlist: true`, so sandboxed commands are refused, not prompted, for any host off the allowlist. In user settings this lock makes Claude Code ignore the repository's `allowedDomains` (the docs' table "Locks that apply without an admin-required sandbox"), so the user settings carry their own `allowedDomains`: GitHub, PyPI and the Square sandbox. Setting `strictAllowlist` in a repository's settings files has no effect.
 
 **Doc URLs.**
 - [Sandboxing](https://code.claude.com/docs/en/sandboxing): `filesystem.denyRead`; "A denyRead entry doesn't stop the Read tool", which is why Read rules are added too; `strictAllowlist`
@@ -201,7 +205,7 @@ The `tests` job runs `pytest -c pytest.ini --rootdir=.` with `PYTEST_DISABLE_PLU
 - [Deployments and environments](https://docs.github.com/en/actions/reference/workflows-and-actions/deployments-and-environments)
 - [Render environment variables and secret files](https://render.com/docs/configure-environment-variables)
 
-**Install.** Day 1, step 7; Day 2, step 3.
+**Install.** Day 1, step 8; Day 2, step 3.
 
 **Smoke tests.**
 - **G4-a.** In a Claude session, ask Claude to run `cat ~/.aws/credentials` (or any listed credential file that exists). Expect a sandbox read denial.
@@ -218,7 +222,7 @@ The `tests` job runs `pytest -c pytest.ini --rootdir=.` with `PYTEST_DISABLE_PLU
 **Mechanism.**
 - **Signed documents stay in `PRIVATE_EVIDENCE_DIR`**, an absolute path outside every git checkout (D4). It holds copies named `STEP-NN/<label>.<ext>`; the owner keeps the signed originals.
 - **Only the founder runs `tools/check_artifact.py`**, in their own terminal. It refuses a folder inside a git checkout, links, empty files and future dates. It prints only the command, exit code, SHA-256, signer role, counts (staff acknowledgments as signed/absent/refused counts only) and date, never a path, file name or content.
-- **Claude sessions can't read the folder by any route.** The user settings deny it to both the Read tool and sandboxed commands. The project settings deny `python tools/check_artifact.py *`, and `CLAUDE.md` forbids running it.
+- **Claude sessions are denied the folder on both routes.** The user settings deny it to the Read tool and to sandboxed commands. The project settings deny `python tools/check_artifact.py *`, and `CLAUDE.md` forbids running it.
 - **Human-step prompts print the full command** with the absolute path written out, for example `PRIVATE_EVIDENCE_DIR=/Users/rehan/TillOwl-private-evidence python tools/check_artifact.py --step STEP-05 --label notice --role owner --date 2026-11-02`, then print AWAITING HUMAN CONFIRMATION.
 
 **Doc URLs.**
@@ -234,6 +238,7 @@ The `tests` job runs `pytest -c pytest.ini --rootdir=.` with `PYTEST_DISABLE_PLU
 **Residual risk.**
 - **Bash deny patterns are fragile.** The deny on the command text doesn't match `sh -c` or other paths ([permissions](https://code.claude.com/docs/en/permissions)). The sandbox's `denyRead` is what actually protects the folder.
 - **The folder is protected only on machines whose user settings name it.** Keep it on the founder's machine only.
+- **A user-level deny is not a lock.** Only `denyRead` set in managed settings or `--settings` makes Claude Code ignore a repository's `allowRead` under a denied path, and the plan uses neither (see G7). A narrower `sandbox.filesystem.allowRead` in `.claude/settings.json` or `.claude/settings.local.json` could re-open the folder. A change to `.claude/settings.json` needs a founder-approved gate-change PR; `settings.local.json` is never committed, so smoke test G7-e checks it on the founder's machine.
 
 ## G6 Claude can't approve, merge or push to main
 
@@ -250,7 +255,7 @@ The `tests` job runs `pytest -c pytest.ini --rootdir=.` with `PYTEST_DISABLE_PLU
 - [Permissions](https://code.claude.com/docs/en/permissions): space form `Bash(gh pr merge *)`. "Bash permission patterns that try to constrain command arguments are fragile", and a pattern "doesn't match the same program by path or inside `sh -c`".
 - [Managing a branch protection rule](https://docs.github.com/en/repositories/configuring-branches-and-merges-in-your-repository/managing-protected-branches/managing-a-branch-protection-rule)
 
-**Install.** Day 1, step 6; the project settings arrive with the install PR.
+**Install.** Day 1, step 7; the project settings arrive with the install PR.
 
 **Smoke tests.**
 - **G6-a.** From a terminal, `git push origin HEAD:main` on a scratch commit. Expect GitHub to reject it.
@@ -269,7 +274,7 @@ The `tests` job runs `pytest -c pytest.ini --rootdir=.` with `PYTEST_DISABLE_PLU
   - `sandbox.failIfUnavailable: true`, so Claude Code exits at startup instead of running unsandboxed.
 - **The user setting holds even if a project says otherwise.** A `false` "in your user settings ... holds even when a project's settings set `true`" (v2.1.285+).
 - **We don't use managed settings or `--settings`.** Either makes the sandbox admin-required, and "Claude Code then ignores the settings in a repository's files that loosen the sandbox, `excludedCommands` entries included".
-- **The project allows only a few network domains:** GitHub, PyPI and the Square sandbox host `connect.squareupsandbox.com`, which Square's docs name ([Square Sandbox](https://developer.squareup.com/docs/devtools/sandbox/overview)). It also sets `network.allowLocalBinding: true`, which applies on macOS only.
+- **The project allows only a few network domains:** GitHub, PyPI and the Square sandbox host `connect.squareupsandbox.com`, which Square's docs name ([Square Sandbox](https://developer.squareup.com/docs/devtools/sandbox/overview); unverified candidate until STEP-01 confirms it). It also sets `network.allowLocalBinding: true`, which applies on macOS only.
 - **The test database works inside the sandbox.** The proposed `conftest.py` starts PostgreSQL on 127.0.0.1 inside the pytest process tree with no Unix socket. On Linux and WSL2 "a sandboxed command's localhost is private to that command", which is enough because the server and the tests share the tree. On macOS, binding a local port needs `allowLocalBinding`. Database drivers "can't connect, even to an allowed host" through the proxy, so local sessions never reach a remote database (consistent with G4). Docker and testcontainers are not used.
 
 **Doc URLs.**
@@ -283,13 +288,14 @@ The `tests` job runs `pytest -c pytest.ini --rootdir=.` with `PYTEST_DISABLE_PLU
 - **G7-b.** Ask Claude to run `touch ~/sandbox-probe`. Expect a write denial with no offer to retry unsandboxed.
 - **G7-c.** In a sandboxed session, run CLAUDE.md's setup command and `.venv/bin/pip install -q 'psycopg[binary]==3.*'`, then the fixture test `PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest -c pytest.ini --rootdir=. docs/build/proposed/smoke/test_pg_fixture.py`. Expect 1 passed. If it fails on macOS with a bind error, confirm `allowLocalBinding` is set.
 - **G7-d.** In a session, `git push` a scratch branch and `gh pr create --draft` on it. Expect both to work. On macOS, if `gh` fails TLS verification ("may fail TLS verification under Seatbelt"), the documented fix is excluding `gh *` via `excludedCommands`, which then "runs with your full access and its stored credentials". That is D17: exclude `gh` (residual risk), or open PRs from the founder's own terminal.
-- **G7-e.** Put `{"sandbox": {"allowUnsandboxedCommands": true}}` in `.claude/settings.local.json`, restart, and repeat G7-a and G7-b. Expect strict mode still on. Remove the file afterwards. If strict mode turns off, record it as residual risk and add `.claude/settings.local.json` to each engineer's review checklist.
+- **G7-e.** Put `{"sandbox": {"allowUnsandboxedCommands": true}}` in `.claude/settings.local.json`, restart, and repeat G7-a and G7-b. Expect strict mode still on. On the founder's machine, also try `{"sandbox": {"filesystem": {"allowRead": ["<the evidence folder>"]}}}` there and repeat G5-a. Record what happens and remove the file afterwards. If either reopens, record it as residual risk and keep `.claude/settings.local.json` empty on that machine.
 
 **Residual risk.**
 - **Commands typed at the `!` shell prompt run outside the sandbox.**
 - **Hooks and MCP servers run outside it.**
 - **Older Claude Code versions** let a project's `true` win over the user's `false`.
 - **Whether `settings.local.json` can reopen the escape hatch** is unconfirmed (G7-e).
+- **On macOS, `allowLocalBinding` reaches every localhost service.** Sandboxed commands "can then listen on network ports and connect to any port on localhost, which includes every other service listening there". Don't run unauthenticated local services (debuggers, local databases with trust auth) on developer Macs while step sessions run.
 
 ## G8 Hooks
 

@@ -16,8 +16,9 @@
 /docs/build/PLANNING_PROMPT.md        @Rmasood1122 @Ahmad317-Engineer
 /docs/build/go-no-go-criteria.md      @Rmasood1122 @Ahmad317-Engineer
 /tillowl/digest/templates/MANIFEST.json  @Rmasood1122 @Ahmad317-Engineer
-/migrations/*_rls*.sql                @Rmasood1122 @Ahmad317-Engineer
-/migrations/*_audit_role*.sql         @Rmasood1122 @Ahmad317-Engineer
+# Every migration: CI also requires a gate-change branch for RLS, policy, grant, role or
+# audit_log DDL outside the two protected files once STEP-08 is done.
+/migrations/                          @Rmasood1122 @Ahmad317-Engineer
 /docs/build/evidence/                 @Rmasood1122 @Ahmad317-Engineer
 /docs/build/findings/                 @Rmasood1122 @Ahmad317-Engineer
 

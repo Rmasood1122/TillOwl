@@ -5,9 +5,9 @@ You run one step from `docs/build/steps/STEP-NN-*.md`. Follow it; the rules belo
 ## Setup (run first in every fresh worktree)
 `python3 -m venv .venv && if [ -f pyproject.toml ]; then .venv/bin/pip install -q -e '.[dev]'; else .venv/bin/pip install -q 'pytest==8.*'; fi`
 
-## Test command
-`PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest -c pytest.ini --rootdir=. tests`
-A gate is the same command with the paths in the step's status file. Never add other pytest config.
+## Test command (staging-only gates run in CI, not here)
+`if [ -d tests ]; then PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 .venv/bin/python -m pytest -c pytest.ini --rootdir=. tests $(python3 tools/check_evidence.py gate-files --kind ci_staging --format ignore); else echo "no tests yet"; fi`
+A ci_fixture gate is the same command with the paths in the step's status file. Never add other pytest config.
 
 ## Evidence rule
 - A step is done only when `docs/build/evidence/STEP-NN.md` passes `python tools/check_evidence.py validate --step STEP-NN`.

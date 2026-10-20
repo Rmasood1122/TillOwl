@@ -49,7 +49,7 @@ TEMPLATE_DIR = "tillowl/digest/templates"
 MANIFEST = f"{TEMPLATE_DIR}/MANIFEST.json"
 CRITERIA_STEP, SPIKE_STEP, DECISION_STEP = "STEP-18", "STEP-20", "STEP-21"
 T17B_STEP, PILOT_STEP = "STEP-40", "STEP-43"
-SCENARIO_STAGING_STEPS = ("STEP-11", "STEP-26", "STEP-30")  # scenarios 4, 4, 3
+SCENARIO_STAGING_STEPS = ("STEP-11", "STEP-24", "STEP-26", "STEP-30", "STEP-31")  # scenarios 4, 2, 4, 3, 1
 EARLIEST_DATE = dt.date(2026, 10, 1)
 
 ALWAYS_PROTECTED_PREFIXES = ("tools/", ".github/", ".claude/", f"{GATES_DIR}/")
@@ -58,6 +58,10 @@ ALWAYS_PROTECTED_FILES = {
     "docs/build/PLANNING_PROMPT.md", CRITERIA,
 }
 PROTECTED_MIGRATION_RE = re.compile(r"^migrations/\d{4}_(rls|audit_role)[a-z0-9_]*\.sql$")
+SECURITY_DDL_RE = re.compile(
+    r"\b(ROW\s+LEVEL\s+SECURITY|POLICY|GRANT|REVOKE|BYPASSRLS|CREATE\s+ROLE|ALTER\s+ROLE|DROP\s+ROLE|"
+    r"SET\s+ROLE|SECURITY\s+DEFINER|audit_log)\b", re.I)
+SKELETON_STEP = "STEP-08"
 GATE_TEST_RE = re.compile(r"^tests/gates/step_\d{2}/test_[^/]+\.py$")
 GATE_DIR_RE = re.compile(r"^tests/gates/step_(\d{2})/")
 SCAN_SKIP = ("docs/build/proposed/",)
@@ -211,15 +215,18 @@ def normalize_command(cmd: str) -> str:
     except ValueError:
         return cmd
     kept: list[str] = []
-    skip = False
-    for part in parts:
-        if skip:
-            skip = False
-            continue
+    i = 0
+    while i < len(parts):
+        part = parts[i]
         if part in ARTIFACT_EXTRA_FLAGS:
-            skip = True
+            value = parts[i + 1] if i + 1 < len(parts) else ""
+            pattern = r"^\d{4}-\d{2}-\d{2}$" if part == "--date" else r"^\d{1,6}$"
+            if not re.match(pattern, value):
+                return "<invalid artifact flag value>"
+            i += 2
             continue
         kept.append(part)
+        i += 1
     return " ".join(kept)
 
 
@@ -324,8 +331,8 @@ def validate_evidence(root: Path, sid: str, status: dict) -> list[str]:
             passed = [int(e["v"]) for e in entries if e["kind"] == "count" and e["unit"] == "passed"]
             if not passed or passed[0] < 1:
                 errors.append(f"{sid}: pytest gates need 'count: N passed' with N >= 1")
-        if kind == "job" and "job_id" not in kinds:
-            errors.append(f"{sid}: job commands need job_id")
+        if kind == "job" and status["gate_kind"] == "production_job" and "job_id" not in kinds:
+            errors.append(f"{sid}: production job commands need job_id")
         if kind == "artifact":
             label, role = flag_value(cmd, "--label"), flag_value(cmd, "--role")
             shas = [e for e in entries if e["kind"] == "sha256"]
@@ -348,7 +355,8 @@ def validate_evidence(root: Path, sid: str, status: dict) -> list[str]:
         errors.append(f"{sid}: {gk} evidence needs a pytest block")
     if gk == "production_job" and not any(command_kind(b["command"]) == "job" for b in blocks):
         errors.append(f"{sid}: production_job evidence needs a job block")
-    if gk == "human" and "role" not in all_kinds:
+    signed = any(command_kind(b["command"]) in ("artifact", "tool") for b in blocks)
+    if gk == "human" and signed and "role" not in all_kinds:
         errors.append(f"{sid}: human evidence needs a role line")
     if gk == "sandbox_spike" and "findings_path" not in status:
         errors.append(f"{sid}: sandbox_spike steps need findings_path in the status file")
@@ -494,6 +502,11 @@ def run_ci(root: Path, base: str, head: str, branch: str, repo: str | None, veri
             errors.append(f"{path}: gate-listed file of a done step changed; {need_gc}")
         if PROTECTED_MIGRATION_RE.match(path) and code != "A" and not gate_change:
             errors.append(f"{path}: RLS or audit-role migration changed; {need_gc}")
+        if (path.startswith("migrations/") and path.endswith(".sql") and code != "D"
+                and not PROTECTED_MIGRATION_RE.match(path) and SKELETON_STEP in base_done and not gate_change):
+            text = (root / path).read_text(encoding="utf-8", errors="replace")
+            if SECURITY_DDL_RE.search(text):
+                errors.append(f"{path}: migration touches RLS, policies, grants, roles or audit_log; {need_gc}")
         if path == MANIFEST and code != "A" and T17B_STEP in base_done and not gate_change:
             errors.append(f"{path}: template manifest changed after T17b; {need_gc}")
         if path.startswith(f"{FINDINGS_DIR}/"):
@@ -531,6 +544,10 @@ def run_ci(root: Path, base: str, head: str, branch: str, repo: str | None, veri
             errors.append(f"{sid}: a done step changes only through a gate-change PR")
             continue
         deps_done = all(head_st.get(d, {}).get("status") == "done" for d in after.get("depends_on", []))
+        runs_if = after.get("runs_if")
+        decided = head_st.get(DECISION_STEP, {}).get("decision", "")
+        if a in ("in_progress", "done") and runs_if and runs_if != decided:
+            errors.append(f"{sid}: runs only on {runs_if}; the recorded decision is {decided or 'not set'}")
         if a == "in_progress" and not deps_done:
             errors.append(f"{sid}: cannot start; depends_on steps are not all done")
         if a == "done":
@@ -599,14 +616,16 @@ def verify_ci_run(root: Path, sid: str, st: dict, base: str, head: str, repo: st
             errors.append(f"{sid}: the step must be in_progress on the commit the run tested")
     else:
         jobs = {j.get("name"): j.get("conclusion") for j in run.get("jobs") or []}
-        if run.get("workflowName") != "staging" or run.get("headBranch") != "main":
-            errors.append(f"{sid}: run {run_id} is not a 'staging' run on main")
+        if (run.get("workflowName") != "staging" or run.get("headBranch") != "main"
+                or run.get("event") not in ("push", "workflow_dispatch")):
+            errors.append(f"{sid}: run {run_id} is not a 'staging' push run on main")
         if jobs.get(f"gate {sid}") != "success":
             errors.append(f"{sid}: job 'gate {sid}' in run {run_id} is not green")
         sha = run.get("headSha") or ""
-        ok = subprocess.run(["git", "merge-base", "--is-ancestor", sha, head], cwd=root).returncode == 0
+        ok = all(subprocess.run(["git", "merge-base", "--is-ancestor", sha, ref], cwd=root).returncode == 0
+                 for ref in (base, head))
         if not ok:
-            errors.append(f"{sid}: run {run_id} is not on this branch's history")
+            errors.append(f"{sid}: run {run_id} is not on main's history")
         else:
             files = sorted(head_gates.get(sid, set()))
             if files and subprocess.run(["git", "diff", "--quiet", sha, head, "--", *files], cwd=root).returncode != 0:
@@ -792,7 +811,8 @@ def cmd_pilot_gate(root: Path, repo: str | None, skip_runs: bool) -> list[str]:
     else:
         repo_args = ["--repo", repo] if repo else []
         for workflow in ("ci", "staging"):
-            runs = gh_json("run", "list", "--workflow", workflow, "--branch", "main", "--limit", "1",
+            runs = gh_json("run", "list", "--workflow", workflow, "--branch", "main", "--event", "push",
+                           "--limit", "1",
                            "--json", "databaseId,conclusion,headSha", *repo_args)
             if not runs or runs[0].get("conclusion") != "success":
                 errors.append(f"latest '{workflow}' run on main is not green")

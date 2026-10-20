@@ -35,7 +35,6 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
       - name: Deploy staging and wait until it serves this release (or a later one)
         env:
           DEPLOY_HOOK: ${{ secrets.RENDER_STAGING_DEPLOY_HOOK }}
@@ -47,6 +46,7 @@ jobs:
           fi
           curl -fsS -X POST "$DEPLOY_HOOK" > /dev/null
           for _ in $(seq 1 60); do
+            git fetch -q origin main || true
             release=$(curl -fsS "$STAGING_URL/healthz" 2>/dev/null \
               | python -c 'import json,sys; print(json.load(sys.stdin).get("release",""))' 2>/dev/null || true)
             if [ -n "$release" ] && git merge-base --is-ancestor "$GITHUB_SHA" "$release" 2>/dev/null; then
