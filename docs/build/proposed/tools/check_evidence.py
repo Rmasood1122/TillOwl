@@ -81,6 +81,7 @@ COUNT_UNITS = {
     "tokens_thinking", "health_checks", "rows_remaining", "owners_2fa", "templates",
     "sample_flags", "scopes", "steps_done",
     "cancelled_orders", "comps", "discounts", "refunds", "no_sale_opens", "item_voids",
+    "notice_versions", "owner_phones", "support_users",
 }
 USD_UNITS = {
     "total", "tokens", "sms", "hosting_web", "hosting_cron", "db_staging", "db_production",
@@ -574,9 +575,11 @@ def run_ci(root: Path, base: str, head: str, branch: str, repo: str | None, veri
             if head_st.get(dep, {}).get("status") != "done":
                 errors.append(f"{sid}: {dep} must be done before this done PR merges")
         allowed = {f"{STATUS_DIR}/{sid}.json", st["evidence_path"]}
+        if st.get("findings_path"):
+            allowed.add(st["findings_path"])  # hash-checked against the evidence below
         extra = sorted(changed - allowed)
         if extra and not gate_change:
-            errors.append(f"{sid}: a done PR changes only its status and evidence files")
+            errors.append(f"{sid}: a done PR changes only its status, evidence and findings files")
         if st["gate_kind"] in ("ci_fixture", "ci_staging"):
             if verify:
                 errors += verify_ci_run(root, sid, st, base, head, repo, head_gates)

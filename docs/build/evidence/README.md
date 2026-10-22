@@ -5,7 +5,7 @@ A step is **done** only when `docs/build/evidence/STEP-NN.md` exists, passes
 
 Evidence is a short, fixed-format record: the gate command, its exit code, and a summary of the output in allowlisted lines (counts, hashes, run or job ids, field names). Raw output stays in the CI log or the founder's terminal. **Never** write names, values, staff identifiers, free text or "it works".
 
-This folder starts empty. Each step's done PR adds exactly one file here and changes nothing else except that step's status file.
+This folder starts empty. Each step's done PR adds exactly one file here and changes nothing else except that step's status file and, for steps with a `findings_path`, that findings file (its SHA-256 must match the `sha256: … label=findings` line).
 
 ## Format
 
@@ -16,7 +16,7 @@ The first line is `# STEP-NN evidence`. Then one block per gate command, in the 
 | `command: <gate command>` | Must equal the gate command. `check_artifact.py` may add `--date`, `--count`, `--absent`, `--refused`. |
 | `exit_code: 0` | Exactly one per block; must be 0. |
 | `sha256: <64 hex> label=<label>` | Labels: `counsel_t17a`, `counsel_t17b`, `sms_optin`, `tendlc_approval`, `terms_t5`, `terms_t6`, `terms_t8`, `t8_template_only`, `notice`, `ack_batch`, `posting`, `authorization`, `support_permission`, `dpa`, `pass_line`, `upfront_invoice`, `t1_approval`, `t1_not_required`, `invoice_settlement`, `notice_export`, `findings`, `criteria`, `template_manifest`, `restore_canary` |
-| `count: <n> <unit>` | Units: `passed`, `rows`, `tenants`, `connections`, `refreshes`, `revokes`, `logins_hashed`, `logins_distinct`, `logins_total`, `staff_signed`, `staff_absent`, `staff_refused`, `acks_entered`, `acks_mapped`, `acks_unmapped`, `shift_windows`, `events`, `orders`, `days`, `v_items`, `flags`, `digests`, `sms_segments`, `tokens_in`, `tokens_out`, `tokens_thinking`, `health_checks`, `rows_remaining`, `owners_2fa`, `templates`, `sample_flags`, `scopes`, `steps_done`, `cancelled_orders`, `comps`, `discounts`, `refunds`, `no_sale_opens`, `item_voids` |
+| `count: <n> <unit>` | Units: `passed`, `rows`, `tenants`, `connections`, `refreshes`, `revokes`, `logins_hashed`, `logins_distinct`, `logins_total`, `staff_signed`, `staff_absent`, `staff_refused`, `acks_entered`, `acks_mapped`, `acks_unmapped`, `shift_windows`, `events`, `orders`, `days`, `v_items`, `flags`, `digests`, `sms_segments`, `tokens_in`, `tokens_out`, `tokens_thinking`, `health_checks`, `rows_remaining`, `owners_2fa`, `templates`, `sample_flags`, `scopes`, `steps_done`, `cancelled_orders`, `comps`, `discounts`, `refunds`, `no_sale_opens`, `item_voids`, `notice_versions`, `owner_phones`, `support_users` |
 | `role: owner\|counsel\|vendor\|staff\|founder` | Who signed. Staff only ever as counts. |
 | `date: YYYY-MM-DD` | Between 2026-10-01 and today. At least one per file. |
 | `run_id: <digits>` | The GitHub Actions run that ran a pytest gate. |

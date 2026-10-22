@@ -12,8 +12,8 @@ Staging holds synthetic data only and is off the service path: nothing here touc
   - it returns 503 with `"status":"error"` when the database is unreachable;
   - the `staging` workflow's deploy job reads this body. Auto-deploy is off; the workflow deploys through the service's deploy hook (one secret URL per service, GET or POST; unverified candidate, https://render.com/docs/deploy-hooks).
 - **Render staging cron service.** It runs `python -m tillowl.jobs.watchdog --env staging` once a day, with `TILLOWL_JOBS_ENABLED=watchdog`; schedules are UTC (unverified candidate, https://render.com/docs/cronjobs). It builds from `main` on push, which is allowed on staging only.
-- **`tillowl/jobs/health_check.py --env staging|production`.** It GETs `/healthz` from the configured base URL, and prints `count: 1 health_checks`, `release: <40-hex>` and `exit_code: 0` only for status ok with a 40-hex release. STEP-13 reuses it.
-- **The run wrapper in `tillowl/jobs/__init__.py`.** It writes one `job_run` row per run (job, env, start, end, exit code) and prints `exit_code: N` last.
+- **`tillowl/jobs/health_check.py --env staging|production`.** It GETs `/healthz` from the configured base URL, and prints `count: 1 health_checks`, `release: <40-hex>`, `date:` and `exit_code: 0` only for status ok with a 40-hex release. STEP-13 reuses it.
+- **STEP-08's `run_job` in `tillowl/jobs/__init__.py`** gains one `job_run` row per run (job, env, start, end, exit code). Its output still ends with `date:` then `exit_code: N`, and every job here runs through it.
 - **`tillowl/jobs/watchdog.py`** (design choice 27).
   - Inputs: each scheduled job in `TILLOWL_JOBS_ENABLED` and its `config.JOB_MAX_AGE_HOURS` entry.
   - It emails the founder (`TILLOWL_FOUNDER_EMAIL`) one alert per job whose last successful run is older than that, or that never succeeded, then exits 1 so Render's failure email fires too.
@@ -24,10 +24,10 @@ Staging holds synthetic data only and is off the service path: nothing here touc
 - **The CREATE ROLE answer**, recorded in the step PR description and passed on to STEP-13. Whether the staging database user may run 0003's `CREATE ROLE` is TBD — not in sources. If it can't, the founder creates the four roles once by hand.
 
 ## Acceptance criteria
-1. **`tests/gates/step_09/test_staging_health.py`.** `GET {STAGING_URL}/healthz` over HTTPS returns 200 and a body with exactly the keys `status` and `release`, `status` equal to `ok`, and `release` 40 lowercase hex characters. The deploy job has already checked that the release contains this commit. `python -m tillowl.jobs.health_check --env staging` prints exactly `count: 1 health_checks`, `release: <the 40-hex release>` and `exit_code: 0`. The body carries nothing else: no environment, no database URL.
+1. **`tests/gates/step_09/test_staging_health.py`.** `GET {STAGING_URL}/healthz` over HTTPS returns 200 and a body with exactly the keys `status` and `release`, `status` equal to `ok`, and `release` 40 lowercase hex characters. The deploy job has already checked that the release contains this commit. `python -m tillowl.jobs.health_check --env staging` prints exactly `count: 1 health_checks`, `release: <the 40-hex release>`, `date: <today UTC>` and `exit_code: 0`, in that order. The body carries nothing else: no environment, no database URL.
 2. **`test_cron_fake_data.py`: one cron run on fake data, in a per-run schema.** Using the `staging_schema` fixture, the test seeds `tests/gates/step_09/fixtures/fake_day.json` and runs the cron's exact start command as a subprocess against that schema, with the stub sender.
    - **The fixture** is synthetic only: a fixed `now`, the enabled jobs, and job-run histories for `fresh`, `missed` and `never`. It holds no tenant, staff or Square data.
-   - **On `fresh`:** exit 0, every output line in the evidence grammar, exactly one new `job_run` row for `watchdog` with exit code 0, and zero emails.
+   - **On `fresh`:** exit 0, every output line in the evidence grammar and the last two `date:` then `exit_code: 0`, exactly one new `job_run` row for `watchdog` with exit code 0, and zero emails.
    - **On `missed`:** exit 1 and exactly one email.
 3. **`test_watchdog_alerts.py`.**
    - For every scenario in the fixture: exactly one email per stale or never-run enabled job, and none for fresh or disabled jobs.
@@ -70,7 +70,7 @@ Human confirmation first: read Render's cron, deploy-hook, notification and envi
 Work, test first:
 - Set docs/build/status/STEP-09.json status to "in_progress".
 - Write the gate tests and fixtures/fake_day.json exactly as listed in docs/build/gates/STEP-09.txt, plus tests/unit/test_watchdog.py on fresh_db. Gate files need the staging environment and can't run here; run the unit tests and see them fail. If you stop here, print RED TEST (intentional).
-- Implement /healthz, the run wrapper, health_check and watchdog (stub sender by default) to the acceptance criteria; add fastapi, uvicorn and httpx to pyproject.toml.
+- Implement /healthz, the job_run row in run_job, health_check and watchdog (stub sender by default) to the acceptance criteria; add fastapi, uvicorn and httpx to pyproject.toml.
 - Run CLAUDE.md's test command and show the command and its output; commit; open the step PR with gh (status in_progress). It merges on review with CI green.
 After merge: the staging workflow runs job "gate STEP-09" on main. If it is red, fix forward in a new PR (for a CREATE ROLE refusal, follow "If the gate fails").
 Done PR: one commit on top of main holding only docs/build/evidence/STEP-09.md and the status set to "done". Take run_id from the green staging run, and "count: N passed" from gh run view <id> --log for job "gate STEP-09"; add the date. Run python tools/check_evidence.py validate --step STEP-09, show the command and its output, and open the PR. Record the CREATE ROLE answer (allowed / founder-created) in the PR description.

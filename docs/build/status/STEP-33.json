@@ -15,7 +15,7 @@
   ],
   "done_requires": [],
   "gate_kind": "production_job",
-  "gate": "python -m tillowl.jobs.roster_read --tenant pilot && python -m tillowl.jobs.onboarding_report --tenant pilot",
+  "gate": "python -m tillowl.jobs.provision_support_user --env production && python -m tillowl.jobs.roster_read --tenant pilot && python -m tillowl.jobs.onboarding_report --tenant pilot",
   "evidence_path": "docs/build/evidence/STEP-33.md",
   "runs_if": "GO"
 }

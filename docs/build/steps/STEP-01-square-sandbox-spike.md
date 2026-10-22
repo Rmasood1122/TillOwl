@@ -14,11 +14,11 @@ Sources: Slide 3 (T1, T2), Slide 19–20 (Square integration, known gaps), Slide
 
 ## Acceptance criteria
 1. `spikes/square_sandbox.py` uses only the standard library. Its host constant is `https://connect.squareupsandbox.com` (Square's docs; unverified until this step). It refuses any other host and reads the token only from `SQUARE_SANDBOX_TOKEN`.
-2. `--probe` makes only GET or search (read) calls and prints only evidence-grammar lines: `scope:`, `field:`, `v_shape:`, `count:`, `exit_code:`. Given a response containing a person's name or an amount, the output contains the field name and type only.
+2. `--probe` makes only GET or search (read) calls and prints only evidence-grammar lines: `scope:`, `field:`, `v_shape:`, `count:`, then `date: YYYY-MM-DD` (UTC) and `exit_code: N` last. Given a response containing a person's name or an amount, the output contains the field name and type only.
 3. `--seed` (optional, design choice) creates synthetic orders in **our own sandbox seller only**, with one cancelled, one refunded and one discounted, so `--probe` has something to observe. It never runs in the gate.
-4. `--check [--findings PATH]` exits 0 only if the findings file has at least one `scope:` line, an `approval_rule:` with at least one `https://developer.squareup.com/` URL, a `sandbox_oauth_flow:` line, and exactly one `v_shape:` per V1–V8. Otherwise it exits 1 and names the missing item.
+4. `--check [--findings PATH]` exits 0 only if the findings file has at least one `scope:` line, an `approval_rule:` with at least one `https://developer.squareup.com/` URL, a `sandbox_oauth_flow:` line, and exactly one `v_shape:` per V1–V8. Otherwise it exits 1 and names the missing item. Its output also ends with `date:` then `exit_code:`.
 5. `tests/gates/step_01/test_sandbox_check.py` runs `--check` on both fixtures: `findings_complete.md` exits 0 and `findings_missing_item.md` (no V6 line) exits 1. It needs no network.
-6. V3 (item voids on paid checks) and V6 (no-sale opens) may be `NOT_OBSERVABLE_IN_SANDBOX`, since Square Point of Sale can't be used in the sandbox. Record that; don't guess.
+6. V3 (item voids on paid checks) and V6 (no-sale opens) may be `NOT_OBSERVABLE_IN_SANDBOX`, since Square Point of Sale can't be used in the sandbox (unverified candidate, https://developer.squareup.com/docs/devtools/sandbox/overview). Record that; don't guess.
 
 ## Human confirmation
 "Confirm that `SQUARE_SANDBOX_TOKEN` in this shell is the personal access token of **our own** Square sandbox test seller (never the friend's), and whether `--seed` may create synthetic orders there." Print AWAITING HUMAN CONFIRMATION and wait.
@@ -29,7 +29,7 @@ Any production Square call, OAuth code (STEP-11), the friend's account, rules, d
 ## Gate
 `python spikes/square_sandbox.py --probe && python spikes/square_sandbox.py --check` (exact, from `docs/build/status/STEP-01.json`). Gate files: `docs/build/gates/STEP-01.txt`.
 
-`docs/build/evidence/STEP-01.md` holds the `--probe` block (its `scope:`, `v_shape:`, `field:`, `count:` lines and `exit_code: 0`, plus a date) and the `--check` block with `sha256: <hex> label=findings` (from `sha256sum docs/build/findings/square-sandbox.md`). CI recomputes that hash.
+`docs/build/evidence/STEP-01.md` holds the `--probe` block (its `scope:`, `v_shape:`, `field:`, `count:` lines, `date:` and `exit_code: 0`) and the `--check` block with `sha256: <hex> label=findings`, `date:` and `exit_code: 0` (from `sha256sum docs/build/findings/square-sandbox.md`). CI recomputes that hash.
 
 ## If the gate fails
 Revert to the last green commit. Set the status to `blocked` with a `blocked_reason` (no tokens, names or values). After two failed attempts, restart in a fresh session with a narrower prompt. If the sandbox lacks an OAuth flow, that is a finding, not a failure: record `sandbox_oauth_flow: NO` and flag D6.

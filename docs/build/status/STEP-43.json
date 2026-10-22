@@ -26,7 +26,7 @@
   ],
   "done_requires": [],
   "gate_kind": "human",
-  "gate": "python tools/check_evidence.py pilot-gate && python -m tillowl.jobs.health_check --env production && python -m tillowl.jobs.send_test --env staging --channel sms --to founder",
+  "gate": "python tools/check_evidence.py pilot-gate && python -m tillowl.jobs.health_check --env production && python -m tillowl.jobs.history_pull --tenant pilot --before-day-one && python -m tillowl.jobs.send_test --env staging --channel sms --to founder",
   "evidence_path": "docs/build/evidence/STEP-43.md",
   "runs_if": "GO"
 }
