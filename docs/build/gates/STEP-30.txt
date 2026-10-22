@@ -1,0 +1,4 @@
+# STEP-30 gate files (ci_staging). One repo-relative path per line; G1 protects them after STEP-30 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_30/test_audit_coverage.py
+tests/gates/step_30/test_scenario3_isolation.py

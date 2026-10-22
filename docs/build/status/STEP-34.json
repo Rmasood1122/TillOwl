@@ -1,0 +1,17 @@
+{
+  "id": "STEP-34",
+  "title": "30-day history pull (V8)",
+  "track": "build",
+  "lane": "connector",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-31",
+    "STEP-33"
+  ],
+  "done_requires": [],
+  "gate_kind": "production_job",
+  "gate": "python -m tillowl.jobs.history_pull --tenant pilot --days 30 && python -m tillowl.jobs.onboarding_report --tenant pilot --history",
+  "evidence_path": "docs/build/evidence/STEP-34.md",
+  "runs_if": "GO"
+}

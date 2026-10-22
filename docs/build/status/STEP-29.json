@@ -1,0 +1,15 @@
+{
+  "id": "STEP-29",
+  "title": "CSV export and termination path",
+  "track": "build",
+  "lane": "console",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-10"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_fixture",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_29",
+  "evidence_path": "docs/build/evidence/STEP-29.md"
+}

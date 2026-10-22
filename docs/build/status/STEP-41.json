@@ -1,0 +1,18 @@
+{
+  "id": "STEP-41",
+  "title": "Metered cost estimate (T9, scenario 5)",
+  "track": "build",
+  "lane": "platform",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-26",
+    "STEP-37"
+  ],
+  "done_requires": [],
+  "gate_kind": "human",
+  "gate": "python -m tillowl.jobs.cost_estimate --sample tests/gates/step_41/fixtures/cost_sample.json --live --check",
+  "evidence_path": "docs/build/evidence/STEP-41.md",
+  "runs_if": "GO",
+  "findings_path": "docs/build/findings/llm-samples.md"
+}

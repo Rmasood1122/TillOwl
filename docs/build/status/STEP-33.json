@@ -1,0 +1,21 @@
+{
+  "id": "STEP-33",
+  "title": "Pilot onboarding on production",
+  "track": "build",
+  "lane": "platform",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-05",
+    "STEP-07",
+    "STEP-13",
+    "STEP-21",
+    "STEP-28",
+    "STEP-32"
+  ],
+  "done_requires": [],
+  "gate_kind": "production_job",
+  "gate": "python -m tillowl.jobs.roster_read --tenant pilot && python -m tillowl.jobs.onboarding_report --tenant pilot",
+  "evidence_path": "docs/build/evidence/STEP-33.md",
+  "runs_if": "GO"
+}

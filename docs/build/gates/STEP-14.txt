@@ -1,0 +1,4 @@
+# STEP-14 gate files (production_job). One repo-relative path per line; G1 protects them after STEP-14 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tillowl/jobs/provision_tenant.py
+tests/gates/step_14/test_provision_tenant.py

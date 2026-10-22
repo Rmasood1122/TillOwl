@@ -1,0 +1,3 @@
+# STEP-40 gate files (human). One repo-relative path per line; G1 protects them after STEP-40 is done.
+# Changing this list needs a gate-change PR the founder approves.
+# No gate test files: the gate is tools/check_artifact.py (G1-protected), run by the founder.

@@ -1,0 +1,4 @@
+# STEP-34 gate files (production_job). One repo-relative path per line; G1 protects them after STEP-34 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tillowl/jobs/history_pull.py
+tests/gates/step_34/test_history_pull_window.py

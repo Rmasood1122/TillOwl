@@ -1,0 +1,15 @@
+{
+  "id": "STEP-08",
+  "title": "Repo skeleton",
+  "track": "build",
+  "lane": "platform",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-01"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_fixture",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_08",
+  "evidence_path": "docs/build/evidence/STEP-08.md"
+}

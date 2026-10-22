@@ -1,0 +1,15 @@
+{
+  "id": "STEP-07",
+  "title": "Design Partner Agreement and pass line signed",
+  "track": "human",
+  "lane": "legal",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-02"
+  ],
+  "done_requires": [],
+  "gate_kind": "human",
+  "gate": "python tools/check_artifact.py --step STEP-07 --label dpa --role owner && python tools/check_artifact.py --step STEP-07 --label pass_line --role owner && python tools/check_artifact.py --step STEP-07 --label upfront_invoice --role founder",
+  "evidence_path": "docs/build/evidence/STEP-07.md"
+}

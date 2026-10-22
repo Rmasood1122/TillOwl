@@ -1,0 +1,16 @@
+{
+  "id": "STEP-02",
+  "title": "Counsel review T17a",
+  "track": "human",
+  "lane": "legal",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [],
+  "done_requires": [
+    "STEP-01"
+  ],
+  "gate_kind": "human",
+  "gate": "python tools/check_artifact.py --step STEP-02 --label counsel_t17a --role counsel",
+  "evidence_path": "docs/build/evidence/STEP-02.md",
+  "findings_path": "docs/build/findings/counsel-t17a-answers.md"
+}

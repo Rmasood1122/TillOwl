@@ -1,0 +1,17 @@
+{
+  "id": "STEP-11",
+  "title": "Square OAuth connect",
+  "track": "build",
+  "lane": "connector",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-01",
+    "STEP-09",
+    "STEP-10"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_staging",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_11",
+  "evidence_path": "docs/build/evidence/STEP-11.md"
+}

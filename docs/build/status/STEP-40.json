@@ -1,0 +1,20 @@
+{
+  "id": "STEP-40",
+  "title": "Counsel review T17b",
+  "track": "human",
+  "lane": "legal",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-25",
+    "STEP-26",
+    "STEP-38",
+    "STEP-39",
+    "STEP-41"
+  ],
+  "done_requires": [],
+  "gate_kind": "human",
+  "gate": "python tools/check_artifact.py --step STEP-40 --label counsel_t17b --role counsel && python tools/check_evidence.py manifest",
+  "evidence_path": "docs/build/evidence/STEP-40.md",
+  "runs_if": "GO"
+}

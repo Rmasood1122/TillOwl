@@ -1,0 +1,7 @@
+# STEP-26 gate files (ci_staging). One repo-relative path per line; G1 protects them after STEP-26 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_26/test_digest_build.py
+tests/gates/step_26/test_delivery_stubbed.py
+tests/gates/step_26/test_scenario4_reconnect_message.py
+tests/gates/step_26/test_owner_only.py
+tests/gates/step_26/fixtures/explained_flags.json

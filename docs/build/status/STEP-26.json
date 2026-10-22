@@ -1,0 +1,17 @@
+{
+  "id": "STEP-26",
+  "title": "Digest build and delivery",
+  "track": "build",
+  "lane": "digest",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-11",
+    "STEP-24",
+    "STEP-25"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_staging",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_26",
+  "evidence_path": "docs/build/evidence/STEP-26.md"
+}

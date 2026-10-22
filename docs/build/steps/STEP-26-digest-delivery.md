@@ -1,0 +1,52 @@
+# STEP-26 Digest build and delivery (email first, SMS behind a switch, reconnect text)
+
+Track: build. Lane: digest. Gate kind: ci_staging. Size: M.
+Depends on: STEP-11 Square OAuth connect (its refresh-failure flag), STEP-24 digest fact checker and deny-list, STEP-25 explanation service. Done requires: none.
+Blocks: STEP-30 audit coverage, STEP-40 counsel T17b, STEP-41 metered cost, STEP-43 pilot-readiness gate.
+Sources: Slide 8–9 (DIG; C6, C7, C12), Slide 10–11 (V11–V15), Slide 12–13 (steps 8–15; the day-one sentence), Slide 17–18 (Digest entity: sent_at, channel, flag ids, text; Q12 join `digest_flag`), Slide 19–20 (I4, I5), Slide 21 (owner-only access, fact-based wording, least data to vendors, notice workflow 5), Slide 22–23 (D4, D5, D10), Slide 24 (scenarios 2 and 4), Slide 29 (RK4, RK8), ADR-005, ADR-006; BUILD_PLAN §1 (Resend), §7, design choices 16, 20, 22, 23, 24; D11.
+
+## Outcome
+- `tillowl/digest/build.py`: `build_digest(conn, tenant_id, business_day)` reads the explained flags not yet in a digest (`flag` rows plus STEP-25's explanation rows), in rank order. For each flag it renders the STEP-23 fact line, adds the explanation sentence only when `TILLOWL_LLM_ENABLED=1` and one exists, and passes every line through `tillowl/digest/checker.py` (STEP-24). A failing sentence is replaced by the template fact line. A flag whose login has no acknowledgment on file is dropped and audit-logged (Slide 21 workflow 5, on top of design choice 16).
+- `tillowl/digest/deliver.py`: email through Resend, `POST https://api.resend.com/emails` with a Bearer key (unverified candidate, [Resend send email](https://resend.com/docs/api-reference/emails/send-email); the page documents no test mode, so CI uses a stub). SMS through Twilio, `POST https://api.twilio.com/2010-04-01/Accounts/{AccountSid}/Messages.json` (unverified candidate, [Twilio Message resource](https://www.twilio.com/docs/messaging/api/message-resource)). SMS sends only when `TILLOWL_SMS_ENABLED=1`, which the founder sets after STEP-03 is done (default `0`; design choice 20), and the owner's digest settings (STEP-28) include SMS. Both calls go through httpx with an injectable transport.
+- Each send writes one `digest` row (sent_at, channel, text, `sms_segments`) plus its `digest_flag` rows, and an audit row `digest_sent` through `audit()`. `sms_segments` uses Twilio's stated limits: GSM-7 160 / 153 per segment, UCS-2 70 / 67 (unverified candidate, [Twilio SMS character limit](https://www.twilio.com/docs/glossary/what-sms-character-limit)). STEP-41 reads it. If STEP-08's schema lacks the column, add it in a new migration.
+- Reconnect (scenario 4): `send_reconnect_if_needed(conn, tenant_id)` sends one fixed-template message ("reconnect Square", plus the console URL, and nothing else) when STEP-11's refresh-failure flag is set. It goes by SMS when SMS is enabled, by email otherwise. It sends once per failure episode, and again only after a reconnect and a new failure. It writes audit row `reconnect_sent`. `refresh_tokens` calls it after a failed refresh, and `run_digest` calls it first. It sends nothing unless `run_digest` is in `TILLOWL_JOBS_ENABLED`, so production stays silent before STEP-43. The template file goes in `tillowl/digest/templates/` and `MANIFEST.json` (design choice 32), so T17b reviews it.
+- Jobs:
+  - `tillowl/jobs/run_digest.py` (`--env`, `--tenant`) runs only on the tenant's digest days from STEP-28's settings. With no settings row it sends nothing and writes audit row `digest_skipped`.
+  - `tillowl/jobs/send_test.py --env staging|production --channel sms|email --to founder` sends one fixed test text to the founder's own number or address from that environment's secret store. `founder` is the only accepted target.
+  - Both print only evidence-grammar lines (`count: N digests`, `count: N flags`, `count: N sms_segments`, `exit_code: N`).
+
+## Acceptance criteria
+1. Given `tests/gates/step_26/fixtures/explained_flags.json`, `pytest … test_digest_build.py` passes. For every line of every built digest, each number, time and login code is present in the flag rows that `digest_flag` links to the digest. No deny-list word (so no thief label, wage deduction or firing suggestion; L4, L5), and no display name from the Employee login rows (Slide 16 EMP), appears in the text. Explanation sentences that add a number, time or name are replaced by the template line (scenario 2). The test re-runs the STEP-24 checker on the final text: if any line fails it, nothing is sent and an audit row records the refusal.
+2. With `TILLOWL_LLM_ENABLED=0`, or with no explanation row, the digest is template-only and still sends (D11). A flag for a login without an acknowledgment never reaches the text, for any fixture row.
+3. `test_owner_only.py`: for every tenant in the fixture, the only recipients are that tenant's own `owner_user` email and phone. No function, setting or job argument accepts another recipient. Staff have no contact fields. A digest never carries another tenant's flag (the query runs under RLS for one tenant).
+4. `test_delivery_stubbed.py`: Resend and Twilio are replaced by `httpx.MockTransport`. Email is sent for every digest. SMS is sent only when the switch is `1` and the owner chose SMS. With the switch `0`, no SMS request is made and no SMS `digest` row is written. A missing vendor key, or a non-2xx stub reply, makes the send fail loudly: no `digest` row with `sent_at`, and a non-zero job exit. `sms_segments` matches the GSM-7/UCS-2 rule for generated bodies of every length from 1 to 1,600 characters. Fixed-value fixtures alone don't count.
+5. `test_scenario4_reconnect_message.py`: on the staging schema, with the refresh-failure flag set, two calls (`refresh_tokens` then `run_digest`) produce exactly one stubbed send and one `reconnect_sent` audit row. Clearing the flag (reconnect) and setting it again produces exactly one more. The body holds no login code, no flag number and no display name.
+6. The tests themselves never make a real network call: the transports are stubbed, and the staging gate job holds no Resend or Twilio key. `send_test` is exercised only against the stub.
+7. Every gate test that touches the database uses the `staging_schema` fixture. Locally those tests fail with the fixture's "runs only in the CI staging workflow" message (G4); every other gate test passes locally.
+
+## Out of scope
+V-item wording, such as dollar amounts, the "opened by login X" clause and approval codes (STEP-38). The ranker (STEP-37: rank is a fixture column here). Shift-window and digest settings screens (STEP-28). Any real send: the first is STEP-43's human-confirmed `send_test`. Production scheduling (STEP-43). A dashboard.
+
+## Gate
+`pytest -c pytest.ini --rootdir=. tests/gates/step_26`, exact, from `docs/build/status/STEP-26.json`; the gate files are in `docs/build/gates/STEP-26.txt`. It runs in the `staging` workflow's job `gate STEP-26` on `main` after the step PR merges. `docs/build/evidence/STEP-26.md` holds one block: `command:` (the gate), `exit_code: 0`, `count: N passed` (from that job's JUnit summary), `run_id:` (that `staging` run), `date:`.
+
+## If the gate fails
+Revert to the last green commit. Set the status to `blocked` with a `blocked_reason` that holds no names or values (for example `scenario4_sent_twice`). After two failed attempts, restart in a fresh session with a narrower prompt. A red `gate STEP-26` job blocks only this step: fix it in a new PR, never by editing a gate file after the done PR.
+
+## Prompt (paste into a fresh Claude Code session)
+```text
+You are running STEP-26 "Digest build and delivery" for TillOwl. Follow @CLAUDE.md throughout.
+Start:
+1. git fetch && git rebase origin/main
+2. Confirm STEP-11, STEP-24 and STEP-25 are "done" in docs/build/status/; if any is not, stop and say which. Read git log -5.
+3. Run CLAUDE.md's setup command.
+4. Read @docs/build/steps/STEP-26-digest-delivery.md, @docs/build/BUILD_PLAN.md §7 and §11, the STEP-23/24/25 code under @tillowl/digest/ and @tillowl/explain/, STEP-11's refresh-failure flag in @tillowl/square/oauth.py, and Slides 8, 9, 12, 13, 17, 18, 19, 21, 24 in @docs/architecture-pack-part1.md and @docs/architecture-pack-part2.md.
+Work, test first:
+- Set docs/build/status/STEP-26.json status to "in_progress".
+- Write the gate files exactly as listed in docs/build/gates/STEP-26.txt (synthetic data only: login codes like L07, shift names like "Dinner"; display names are placeholders like DN-L07). Database tests use staging_schema. Run them: they fail (print RED TEST (intentional) if you stop here).
+- Implement build.py, deliver.py, the reconnect template plus its MANIFEST.json entry, run_digest.py and send_test.py to the acceptance criteria. Never call Resend or Twilio for real; no vendor key goes in any file.
+- Verify: run CLAUDE.md's test command, then run the step's gate files directly and show which tests fail only on the staging_schema message. Commit; open the step PR with gh (status in_progress).
+After merge: the staging workflow runs job "gate STEP-26" on main. Done PR: one commit on top of main holding only docs/build/evidence/STEP-26.md (command, exit_code 0, count N passed and run_id from that green staging run, date) and the status set to "done"; run python tools/check_evidence.py validate --step STEP-26 and show the output; open it with gh. Show every command and its output; never claim success.
+Out of scope: V-item wording (STEP-38), the ranker (STEP-37), settings screens (STEP-28), any real send (STEP-43), production scheduling.
+Use a subagent to review the diff against this step file and report only gaps that affect correctness or the stated acceptance criteria.
+```

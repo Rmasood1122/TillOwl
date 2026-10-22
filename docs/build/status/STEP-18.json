@@ -1,0 +1,15 @@
+{
+  "id": "STEP-18",
+  "title": "Go/no-go criteria accepted",
+  "track": "human",
+  "lane": "gate",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [],
+  "done_requires": [
+    "STEP-01"
+  ],
+  "gate_kind": "human",
+  "gate": "python tools/check_evidence.py criteria",
+  "evidence_path": "docs/build/evidence/STEP-18.md"
+}

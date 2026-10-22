@@ -30,6 +30,8 @@ The first line is `# STEP-NN evidence`. Then one block per gate command, in the 
 | `oauth_connection: kept\|revoked` | After the spike or exit. |
 | `model_id: claude-…` | The pinned model, in the cost step. |
 | `usd_month: <n.nn> <unit>` | Cost step only. Units: `total`, `tokens`, `sms`, `hosting_web`, `hosting_cron`, `db_staging`, `db_production`, `email`, `lean_line` |
+| `release: <40 hex>` | A deployed or tested commit. `health_check` and `pilot-gate` print it; STEP-43's evidence must show one commit throughout. |
+| `passline: PASS\|FAIL\|T11_ZONE\|INCOMPLETE` | The day-90 pass-line verdict from `passline_report`. |
 
 ## What each kind of gate must show
 
@@ -39,7 +41,7 @@ The first line is `# STEP-NN evidence`. Then one block per gate command, in the 
 | `ci_staging` | The same, but the run is a `staging` run on `main` whose job `gate STEP-NN` is green, and the gate files are unchanged since. |
 | `production_job` | One block per job with `job_id` and `exit_code: 0`, as printed by the job the founder launched. Steps with a findings file also carry `sha256: … label=findings`, which CI recomputes. |
 | `sandbox_spike` | `sha256: … label=findings` matching the findings file. |
-| `human` | A `role` line. `check_artifact.py` blocks also need `sha256` (label matching `--label`), `role` (matching `--role`) and `date`; staff blocks need signed, absent and refused counts. |
+| `human` | A `role` line when the gate runs `check_artifact.py` or a `tools/check_evidence.py` subcommand; human gates made only of job commands (STEP-12, STEP-41) need none. `check_artifact.py` blocks also need `sha256` (label matching `--label`), `role` (matching `--role`) and `date`; staff blocks need signed, absent and refused counts. |
 
 ## Examples
 

@@ -1,0 +1,15 @@
+{
+  "id": "STEP-19",
+  "title": "Live-spike job code",
+  "track": "build",
+  "lane": "connector",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-11"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_fixture",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_19",
+  "evidence_path": "docs/build/evidence/STEP-19.md"
+}

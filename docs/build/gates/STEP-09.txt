@@ -1,0 +1,6 @@
+# STEP-09 gate files (ci_staging). One repo-relative path per line; G1 protects them after STEP-09 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_09/test_staging_health.py
+tests/gates/step_09/test_cron_fake_data.py
+tests/gates/step_09/test_watchdog_alerts.py
+tests/gates/step_09/fixtures/fake_day.json

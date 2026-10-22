@@ -1,0 +1,5 @@
+# STEP-28 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-28 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_28/test_shift_windows.py
+tests/gates/step_28/test_window_business_day.py
+tests/gates/step_28/test_settings_audit.py

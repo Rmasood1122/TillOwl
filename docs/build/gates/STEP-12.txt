@@ -1,0 +1,3 @@
+# STEP-12 gate files (human). One repo-relative path per line; G1 protects them after STEP-12 is done.
+# Changing this list needs a gate-change PR the founder approves.
+# No gate test files: the gate commands above are the tools/jobs named in the status file.

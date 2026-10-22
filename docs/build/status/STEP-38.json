@@ -1,0 +1,18 @@
+{
+  "id": "STEP-38",
+  "title": "V-item branches in templates and checker",
+  "track": "build",
+  "lane": "digest",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-21",
+    "STEP-24",
+    "STEP-37"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_fixture",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_38",
+  "evidence_path": "docs/build/evidence/STEP-38.md",
+  "runs_if": "GO"
+}

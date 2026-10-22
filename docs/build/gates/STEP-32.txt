@@ -1,0 +1,5 @@
+# STEP-32 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-32 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_32/test_roster_mapping.py
+tests/gates/step_32/test_display_names_stay_local.py
+tests/gates/step_32/fixtures/square_team_members.json

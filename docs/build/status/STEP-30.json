@@ -1,0 +1,19 @@
+{
+  "id": "STEP-30",
+  "title": "Audit-log coverage and scenario 3",
+  "track": "build",
+  "lane": "platform",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-19",
+    "STEP-26",
+    "STEP-27",
+    "STEP-28",
+    "STEP-29"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_staging",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_30",
+  "evidence_path": "docs/build/evidence/STEP-30.md"
+}

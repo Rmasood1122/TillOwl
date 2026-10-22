@@ -1,0 +1,16 @@
+{
+  "id": "STEP-22",
+  "title": "No-go exit (runs only on NO-GO)",
+  "track": "build",
+  "lane": "platform",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-21"
+  ],
+  "done_requires": [],
+  "gate_kind": "production_job",
+  "gate": "python -m tillowl.jobs.exit_tenant --tenant pilot && python -m tillowl.jobs.verify_deleted --tenant pilot --scope tenant && python tools/check_artifact.py --step STEP-22 --label notice_export --role owner && python tools/check_artifact.py --step STEP-22 --label invoice_settlement --role founder",
+  "evidence_path": "docs/build/evidence/STEP-22.md",
+  "runs_if": "NO-GO"
+}

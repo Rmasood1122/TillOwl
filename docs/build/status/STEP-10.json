@@ -1,0 +1,15 @@
+{
+  "id": "STEP-10",
+  "title": "Owner sign-in with TOTP two-factor",
+  "track": "build",
+  "lane": "console",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-08"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_fixture",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_10",
+  "evidence_path": "docs/build/evidence/STEP-10.md"
+}

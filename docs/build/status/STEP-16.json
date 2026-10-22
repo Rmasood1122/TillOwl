@@ -1,0 +1,16 @@
+{
+  "id": "STEP-16",
+  "title": "Production OAuth check on our own Square account",
+  "track": "build",
+  "lane": "connector",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-14",
+    "STEP-15"
+  ],
+  "done_requires": [],
+  "gate_kind": "production_job",
+  "gate": "python -m tillowl.jobs.oauth_check --tenant own",
+  "evidence_path": "docs/build/evidence/STEP-16.md"
+}

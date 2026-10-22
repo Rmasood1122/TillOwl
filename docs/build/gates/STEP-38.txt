@@ -1,0 +1,4 @@
+# STEP-38 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-38 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_38/test_v_item_wording.py
+tests/gates/step_38/fixtures/flags_mixed_v_results.json

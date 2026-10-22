@@ -1,0 +1,14 @@
+{
+  "id": "STEP-03",
+  "title": "Twilio 10DLC and the owner's SMS opt-in (T6)",
+  "track": "human",
+  "lane": "vendor",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [],
+  "done_requires": [],
+  "gate_kind": "human",
+  "gate": "python tools/check_artifact.py --step STEP-03 --label sms_optin --role owner && python tools/check_artifact.py --step STEP-03 --label tendlc_approval --role vendor && python tools/check_artifact.py --step STEP-03 --label terms_t6 --role vendor",
+  "evidence_path": "docs/build/evidence/STEP-03.md",
+  "findings_path": "docs/build/findings/twilio-10dlc.md"
+}

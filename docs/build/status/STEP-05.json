@@ -1,0 +1,15 @@
+{
+  "id": "STEP-05",
+  "title": "Notice given, acknowledged on paper and posted (52-c*2)",
+  "track": "human",
+  "lane": "legal",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-02"
+  ],
+  "done_requires": [],
+  "gate_kind": "human",
+  "gate": "python tools/check_artifact.py --step STEP-05 --label notice --role owner && python tools/check_artifact.py --step STEP-05 --label ack_batch --role staff && python tools/check_artifact.py --step STEP-05 --label posting --role owner",
+  "evidence_path": "docs/build/evidence/STEP-05.md"
+}

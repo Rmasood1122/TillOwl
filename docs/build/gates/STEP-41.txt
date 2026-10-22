@@ -1,0 +1,5 @@
+# STEP-41 gate files (human). One repo-relative path per line; G1 protects them after STEP-41 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tillowl/jobs/cost_estimate.py
+tests/gates/step_41/test_cost_estimate_offline.py
+tests/gates/step_41/fixtures/cost_sample.json

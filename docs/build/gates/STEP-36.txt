@@ -1,0 +1,6 @@
+# STEP-36 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-36 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_36/test_flags_a_branches.py
+tests/gates/step_36/test_flag_ack_gate.py
+tests/gates/step_36/fixtures/events_v_returned.json
+tests/gates/step_36/fixtures/events_v_not_returned.json

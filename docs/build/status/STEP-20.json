@@ -1,0 +1,25 @@
+{
+  "id": "STEP-20",
+  "title": "Run the read-only live spike",
+  "track": "build",
+  "lane": "connector",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-02",
+    "STEP-05",
+    "STEP-06",
+    "STEP-11",
+    "STEP-13",
+    "STEP-15",
+    "STEP-16",
+    "STEP-17",
+    "STEP-18",
+    "STEP-19"
+  ],
+  "done_requires": [],
+  "gate_kind": "production_job",
+  "gate": "python -m tillowl.jobs.square_live_report --tenant pilot --check && python -m tillowl.jobs.verify_deleted --tenant pilot --scope spike",
+  "evidence_path": "docs/build/evidence/STEP-20.md",
+  "findings_path": "docs/build/findings/square-fields.md"
+}

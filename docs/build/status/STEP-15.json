@@ -1,0 +1,16 @@
+{
+  "id": "STEP-15",
+  "title": "T1 resolved: Square production approval",
+  "track": "human",
+  "lane": "vendor",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-01",
+    "STEP-13"
+  ],
+  "done_requires": [],
+  "gate_kind": "human",
+  "gate": "python tools/check_artifact.py --step STEP-15 --label t1_approval --role vendor",
+  "evidence_path": "docs/build/evidence/STEP-15.md"
+}

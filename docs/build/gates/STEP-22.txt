@@ -1,0 +1,4 @@
+# STEP-22 gate files (production_job). One repo-relative path per line; G1 protects them after STEP-22 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tillowl/jobs/exit_tenant.py
+tests/gates/step_22/test_exit_tenant.py

@@ -1,0 +1,4 @@
+# STEP-23 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-23 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_23/test_fact_templates.py
+tests/gates/step_23/test_template_manifest.py

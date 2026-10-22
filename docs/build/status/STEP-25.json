@@ -1,0 +1,16 @@
+{
+  "id": "STEP-25",
+  "title": "Explanation service with the model stubbed",
+  "track": "build",
+  "lane": "explain",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-08",
+    "STEP-23"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_fixture",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_25",
+  "evidence_path": "docs/build/evidence/STEP-25.md"
+}

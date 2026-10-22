@@ -1,0 +1,19 @@
+{
+  "id": "STEP-31",
+  "title": "Square event ingestion (scenario 1)",
+  "track": "build",
+  "lane": "connector",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-11",
+    "STEP-21",
+    "STEP-27",
+    "STEP-28"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_staging",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_31",
+  "evidence_path": "docs/build/evidence/STEP-31.md",
+  "runs_if": "GO"
+}

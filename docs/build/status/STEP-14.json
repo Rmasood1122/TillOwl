@@ -1,0 +1,15 @@
+{
+  "id": "STEP-14",
+  "title": "Provision our own production tenant",
+  "track": "build",
+  "lane": "platform",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-13"
+  ],
+  "done_requires": [],
+  "gate_kind": "production_job",
+  "gate": "python -m tillowl.jobs.provision_tenant --kind own",
+  "evidence_path": "docs/build/evidence/STEP-14.md"
+}

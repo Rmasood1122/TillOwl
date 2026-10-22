@@ -1,0 +1,5 @@
+# STEP-35 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-35 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_35/test_ratios.py
+tests/gates/step_35/test_baselines_ack_only.py
+tests/gates/step_35/fixtures/events_30_days.json

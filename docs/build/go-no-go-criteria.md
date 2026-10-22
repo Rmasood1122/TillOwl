@@ -16,7 +16,7 @@ PARTIAL counts as NOT_RETURNED (Slide 30: nothing appears in a digest until its 
 2. **V8 NOT_RETURNED: no 30 days of history.** The pass line needs "30 days before" (Slide 26).
    - Default: NO-GO.
    - Founder option (edit before accepting): GO only if the signed DPA already contains a collect-first variant, where the first 30 pilot days build the "before" figure and the 90-day term starts after them, and counsel reviewed it under T17a.
-3. **V1 NOT_RETURNED and no signed substitute measure.** The pass line uses void dollars (Slide 26). If V1 is missing, GO needs the substitute measure and the 0.5–1 point rule already signed in the DPA (STEP-07, RK2, T11).
+3. **V1 or V5 NOT_RETURNED and no signed substitute measure.** The pass line is voids + comps + discounts as a percent of net sales (Slide 26), so it needs void dollars (V1) and comp detail (V5). If either is missing, GO needs the substitute measure for that case and the 0.5–1 point rule already signed in the DPA (STEP-07, RK2, T11).
 4. **Both V2 and V7 NOT_RETURNED: no per-login signal at all.** Per-login baselines then have no data (our inference, not in the pack).
    - Default: NO-GO under RK1, "stop if the signal is too thin".
    - Founder option (edit before accepting): GO for a shift-level-only digest, if the owner agrees in writing that shift-level facts are useful.

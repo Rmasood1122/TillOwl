@@ -1,0 +1,6 @@
+# STEP-01 gate files (sandbox_spike). One repo-relative path per line; G1 protects them after STEP-01 is done.
+# Changing this list needs a gate-change PR the founder approves.
+spikes/square_sandbox.py
+tests/gates/step_01/test_sandbox_check.py
+tests/gates/step_01/fixtures/findings_complete.md
+tests/gates/step_01/fixtures/findings_missing_item.md

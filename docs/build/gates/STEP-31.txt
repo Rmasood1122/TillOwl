@@ -1,0 +1,7 @@
+# STEP-31 gate files (ci_staging). One repo-relative path per line; G1 protects them after STEP-31 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_31/test_ingest_branches.py
+tests/gates/step_31/test_ack_stripping.py
+tests/gates/step_31/test_scenario1_missed_day.py
+tests/gates/step_31/fixtures/square_orders_returned.json
+tests/gates/step_31/fixtures/square_orders_not_returned.json

@@ -1,0 +1,8 @@
+# STEP-19 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-19 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_19/test_live_report_counts_only.py
+tests/gates/step_19/test_hmac_logins.py
+tests/gates/step_19/test_verify_deleted.py
+tests/gates/step_19/test_v_item_results.py
+tests/gates/step_19/fixtures/square_responses_full.json
+tests/gates/step_19/fixtures/square_responses_sparse.json

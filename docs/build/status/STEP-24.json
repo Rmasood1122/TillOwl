@@ -1,0 +1,17 @@
+{
+  "id": "STEP-24",
+  "title": "Digest fact checker and deny-list (scenario 2)",
+  "track": "build",
+  "lane": "digest",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-23"
+  ],
+  "done_requires": [
+    "STEP-09"
+  ],
+  "gate_kind": "ci_staging",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_24",
+  "evidence_path": "docs/build/evidence/STEP-24.md"
+}

@@ -1,0 +1,5 @@
+# STEP-10 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-10 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_10/test_owner_signin_totp.py
+tests/gates/step_10/test_no_staff_accounts.py
+tests/gates/step_10/test_signin_audit.py

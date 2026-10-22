@@ -1,0 +1,3 @@
+# STEP-42 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-42 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_42/test_billing_cancel.py

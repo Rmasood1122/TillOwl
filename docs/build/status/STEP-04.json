@@ -1,0 +1,14 @@
+{
+  "id": "STEP-04",
+  "title": "Vendor data terms: model no-training (T8) and email (T5)",
+  "track": "human",
+  "lane": "vendor",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [],
+  "done_requires": [],
+  "gate_kind": "human",
+  "gate": "python tools/check_artifact.py --step STEP-04 --label terms_t5 --role vendor && python tools/check_artifact.py --step STEP-04 --label terms_t8 --role vendor",
+  "evidence_path": "docs/build/evidence/STEP-04.md",
+  "findings_path": "docs/build/findings/vendor-terms.md"
+}

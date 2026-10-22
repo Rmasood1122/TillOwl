@@ -1,0 +1,5 @@
+# STEP-39 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-39 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_39/test_passline.py
+tests/gates/step_39/test_digest_opening_measure.py
+tests/gates/step_39/fixtures/passline_before_after.json

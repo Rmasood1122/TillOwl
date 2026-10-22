@@ -1,0 +1,7 @@
+# STEP-24 gate files (ci_staging). One repo-relative path per line; G1 protects them after STEP-24 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_24/test_fact_checker.py
+tests/gates/step_24/test_deny_list.py
+tests/gates/step_24/test_scenario2_facts_only.py
+tests/gates/step_24/fixtures/week_with_3_flags.json
+tests/gates/step_24/fixtures/llm_sentences.json

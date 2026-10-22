@@ -1,0 +1,5 @@
+# STEP-20 gate files (production_job). One repo-relative path per line; G1 protects them after STEP-20 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tillowl/jobs/square_live_report.py
+tillowl/jobs/verify_deleted.py
+tillowl/square/live_report.py

@@ -1,0 +1,16 @@
+{
+  "id": "STEP-37",
+  "title": "Flags B: comps, discounts, refunds and the ranker",
+  "track": "build",
+  "lane": "rules",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-36"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_fixture",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_37",
+  "evidence_path": "docs/build/evidence/STEP-37.md",
+  "runs_if": "GO"
+}

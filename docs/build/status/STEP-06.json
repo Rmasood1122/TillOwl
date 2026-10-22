@@ -1,0 +1,15 @@
+{
+  "id": "STEP-06",
+  "title": "Owner signs the spike authorization and support-access permission",
+  "track": "human",
+  "lane": "legal",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-02"
+  ],
+  "done_requires": [],
+  "gate_kind": "human",
+  "gate": "python tools/check_artifact.py --step STEP-06 --label authorization --role owner && python tools/check_artifact.py --step STEP-06 --label support_permission --role owner",
+  "evidence_path": "docs/build/evidence/STEP-06.md"
+}

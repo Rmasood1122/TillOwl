@@ -1,0 +1,4 @@
+# STEP-33 gate files (production_job). One repo-relative path per line; G1 protects them after STEP-33 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tillowl/jobs/roster_read.py
+tests/gates/step_33/test_onboarding_counts.py

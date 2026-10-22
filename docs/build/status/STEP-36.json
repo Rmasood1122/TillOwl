@@ -1,0 +1,17 @@
+{
+  "id": "STEP-36",
+  "title": "Flags A: cancelled orders, item voids, approval codes, no-sale opens",
+  "track": "build",
+  "lane": "rules",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-32",
+    "STEP-35"
+  ],
+  "done_requires": [],
+  "gate_kind": "ci_fixture",
+  "gate": "pytest -c pytest.ini --rootdir=. tests/gates/step_36",
+  "evidence_path": "docs/build/evidence/STEP-36.md",
+  "runs_if": "GO"
+}

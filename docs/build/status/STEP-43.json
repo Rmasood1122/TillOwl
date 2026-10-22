@@ -1,0 +1,32 @@
+{
+  "id": "STEP-43",
+  "title": "Pilot-readiness gate",
+  "track": "human",
+  "lane": "gate",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-03",
+    "STEP-04",
+    "STEP-05",
+    "STEP-07",
+    "STEP-15",
+    "STEP-20",
+    "STEP-21",
+    "STEP-26",
+    "STEP-30",
+    "STEP-33",
+    "STEP-34",
+    "STEP-36",
+    "STEP-37",
+    "STEP-38",
+    "STEP-39",
+    "STEP-40",
+    "STEP-41"
+  ],
+  "done_requires": [],
+  "gate_kind": "human",
+  "gate": "python tools/check_evidence.py pilot-gate && python -m tillowl.jobs.health_check --env production && python -m tillowl.jobs.send_test --env staging --channel sms --to founder",
+  "evidence_path": "docs/build/evidence/STEP-43.md",
+  "runs_if": "GO"
+}

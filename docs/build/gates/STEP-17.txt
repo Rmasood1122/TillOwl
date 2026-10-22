@@ -1,0 +1,4 @@
+# STEP-17 gate files (production_job). One repo-relative path per line; G1 protects them after STEP-17 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_17/test_owner_invite.py
+tests/gates/step_17/test_onboarding_report_2fa.py

@@ -1,0 +1,5 @@
+# STEP-29 gate files (ci_fixture). One repo-relative path per line; G1 protects them after STEP-29 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tillowl/jobs/terminate_tenant.py
+tests/gates/step_29/test_csv_export.py
+tests/gates/step_29/test_termination_path.py

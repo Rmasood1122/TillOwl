@@ -1,0 +1,16 @@
+{
+  "id": "STEP-13",
+  "title": "Production environment",
+  "track": "build",
+  "lane": "platform",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [
+    "STEP-11",
+    "STEP-12"
+  ],
+  "done_requires": [],
+  "gate_kind": "production_job",
+  "gate": "python -m tillowl.jobs.health_check --env production && python -m tillowl.jobs.restore_check --env production && python -m tillowl.jobs.redirect_check --env production",
+  "evidence_path": "docs/build/evidence/STEP-13.md"
+}

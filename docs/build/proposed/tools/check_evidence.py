@@ -109,6 +109,8 @@ LINE_RULES: list[tuple[str, re.Pattern]] = [
     ("oauth_connection", re.compile(r"^oauth_connection: (?P<v>kept|revoked)$")),
     ("model_id", re.compile(r"^model_id: (?P<v>claude-[a-z0-9-]{3,40})$")),
     ("usd_month", re.compile(r"^usd_month: (?P<v>\d{1,5}\.\d{2}) (?P<unit>[a-z0-9_]{1,40})$")),
+    ("release", re.compile(r"^release: (?P<v>[0-9a-f]{40})$")),
+    ("passline", re.compile(r"^passline: (?P<v>PASS|FAIL|T11_ZONE|INCOMPLETE)$")),
 ]
 ARTIFACT_EXTRA_FLAGS = {"--date", "--count", "--absent", "--refused"}
 
@@ -367,6 +369,10 @@ def validate_evidence(root: Path, sid: str, status: dict) -> list[str]:
             errors.append(f"{sid}: findings file is missing")
         elif shas != [sha256_file(fpath)]:
             errors.append(f"{sid}: 'sha256: ... label=findings' must equal the findings file's SHA-256")
+    if sid == PILOT_STEP:
+        releases = {e["v"] for e in lines_of(blocks, "release")}
+        if len(releases) != 1 or len(lines_of(blocks, "release")) < 2:
+            errors.append(f"{sid}: pilot-gate and health_check must print the same release commit")
     if sid == DECISION_STEP:
         decisions = [e["v"] for e in lines_of(blocks, "decision")]
         if decisions != [status.get("decision")]:
@@ -806,6 +812,7 @@ def cmd_pilot_gate(root: Path, repo: str | None, skip_runs: bool) -> list[str]:
     terms = labels("STEP-04")
     if "terms_t5" not in terms or not ({"terms_t8", "t8_template_only"} & terms):
         errors.append("STEP-04 lacks the email terms, or T8 terms / the template-only decision")
+    staging_release = ""
     if skip_runs:
         errors.append("run checks skipped; this output cannot serve as evidence")
     else:
@@ -817,6 +824,7 @@ def cmd_pilot_gate(root: Path, repo: str | None, skip_runs: bool) -> list[str]:
             if not runs or runs[0].get("conclusion") != "success":
                 errors.append(f"latest '{workflow}' run on main is not green")
             elif workflow == "staging":
+                staging_release = runs[0].get("headSha", "")
                 run = gh_json("run", "view", str(runs[0]["databaseId"]), "--json", "jobs", *repo_args)
                 jobs = {j.get("name"): j.get("conclusion") for j in run.get("jobs") or []}
                 for sid in SCENARIO_STAGING_STEPS:
@@ -826,6 +834,7 @@ def cmd_pilot_gate(root: Path, repo: str | None, skip_runs: bool) -> list[str]:
         print("command: python tools/check_evidence.py pilot-gate")
         print("exit_code: 0")
         print(f"count: {len(pilot['depends_on'])} steps_done")
+        print(f"release: {staging_release}")
         print("role: founder")
         print(f"date: {dt.date.today().isoformat()}")
     return errors

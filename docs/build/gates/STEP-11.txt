@@ -1,0 +1,7 @@
+# STEP-11 gate files (ci_staging). One repo-relative path per line; G1 protects them after STEP-11 is done.
+# Changing this list needs a gate-change PR the founder approves.
+tests/gates/step_11/test_oauth_connect.py
+tests/gates/step_11/test_token_refresh.py
+tests/gates/step_11/test_token_encryption.py
+tests/gates/step_11/test_scenario4_refresh_failure.py
+tests/gates/step_11/fixtures/square_oauth_responses.json

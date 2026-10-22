@@ -1,0 +1,14 @@
+{
+  "id": "STEP-01",
+  "title": "Square-sandbox spike",
+  "track": "build",
+  "lane": "connector",
+  "assignee": "",
+  "status": "not_started",
+  "depends_on": [],
+  "done_requires": [],
+  "gate_kind": "sandbox_spike",
+  "gate": "python spikes/square_sandbox.py --probe && python spikes/square_sandbox.py --check",
+  "evidence_path": "docs/build/evidence/STEP-01.md",
+  "findings_path": "docs/build/findings/square-sandbox.md"
+}
