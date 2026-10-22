@@ -11,7 +11,7 @@ Sources: Slides 15–16 (EMP "login_id, square team member, display name"; R4), 
   - Codes are never reused or renumbered.
   - A team member that is no longer returned keeps its row and code, marked inactive, because acknowledgments and history point to it.
   - The data is used **only** for the acknowledgment mapping (design choice 14).
-- `tillowl/jobs/roster_read.py` (`python -m tillowl.jobs.roster_read --tenant pilot`) prints only `count: N logins_total` and `exit_code: N`. It audit-logs `roster.read` with the count.
+- `tillowl/jobs/roster_read.py` (`python -m tillowl.jobs.roster_read --tenant pilot`, run through STEP-08's `run_job` wrapper) prints only `count: N logins_total`, then `date: YYYY-MM-DD` and `exit_code: N`. It audit-logs `roster.read` with the count.
 - STEP-27's mapping screen lists logins as code plus display name, to the signed-in owner, or to the founder while an owner's support-access grant is active.
   - Mapping sets `acknowledgment.login_id` (Q4).
   - Each map and unmap is audit-logged by login code, never by name.
@@ -32,7 +32,7 @@ Sources: Slides 15–16 (EMP "login_id, square team member, display name"; R4), 
    - If `roster_read_scope_approved: YES`: the steps above apply.
    - If `NO`: `roster_read` makes no Square call and prints the count of logins already in the table. The mapping screen accepts a login code and a Square team-member id that the founder types from the Square dashboard, with `display_name` left null.
    - Both branches are tested.
-4. **Read-only.** Every request is in `client.py`'s read-only allowlist. A Square error makes the job exit 1, and its output still holds only grammar lines.
+4. **Read-only.** Every request is in `client.py`'s read-only allowlist. A Square error makes the job exit 1. In every case its output holds only grammar lines and ends `date:` then `exit_code:`.
 
 ## V-item branches
 - **Roster fields.** Team-member ids and display names are not V-items, so `roster_read` reads the same fields in every branch.
@@ -62,7 +62,7 @@ Work, test first:
 - Set docs/build/status/STEP-32.json status to "in_progress".
 - Write the two tests and the fixture exactly as listed in docs/build/gates/STEP-32.txt. Fixture names are synthetic tokens (SYNTH_NAME_01…), never real names.
 - Run pytest -c pytest.ini --rootdir=. tests/gates/step_32. It fails (print RED TEST (intentional) if you stop here).
-- Implement square/roster.py, jobs/roster_read.py and the mapping hook in STEP-27's screen, to the acceptance criteria, with both COUNSEL branches.
+- Implement square/roster.py, jobs/roster_read.py (on STEP-08's run_job wrapper) and the mapping hook in STEP-27's screen, to the acceptance criteria, with both COUNSEL branches.
 - Run the gate and CLAUDE.md's test command, and show both outputs. Commit, then open the step PR with gh (status in_progress). It merges when CI is green.
 Done PR: after the ci push run on main is green, make one commit on top of main holding only docs/build/evidence/STEP-32.md (command, exit_code: 0, count: N passed and run_id from that run via gh run view <id> --log, date) and the status set to "done". Run python tools/check_evidence.py validate --step STEP-32, show the output, and open the PR. Never claim success without output.
 Out of scope: production runs, real acknowledgments, ingestion, display names anywhere but the console.

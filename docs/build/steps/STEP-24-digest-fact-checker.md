@@ -16,7 +16,7 @@ Sources: Slide 12 ("Step 11 rejects any number that is not in the stored flag"),
    - integers and decimals, counts, money (`$412`, `$1,204.50`, `412 dollars`) and percentages;
    - spelled-out numbers ("nine", "twenty-one");
    - ordinals and numbers inside dates.
-   `$412` and `412.00` match a stored 412; `9` doesn't match a stored 90.
+   Money compares in integer cents: a stored amount of 41200 cents matches "$412" and "$412.00" (and "412 dollars"), and "$412.50" doesn't match it. `9` doesn't match a stored 90. The same rules apply in `check_sentence` and `untraced`.
 2. **Times.** Every time ("10:40", "10:40 pm", "22:40", "11 pm") must equal a time in the flag's evidence, in the restaurant's time zone (design choice 18). Every date or weekday must be the flag's business day.
 3. **Names.** Login codes and approval codes must be the flag's own, and a shift name must be the flag's shift. Any other capitalised word, the sentence's first word included, is treated as a name and rejected unless it is in a short fixed allowlist of non-name words in `checker.py` (for example "The", "On", "During", "Between", "Square"). A display name is rejected even when the flag row carries one.
 4. **Deny-list.** Any `deny_list.txt` word rejects the sentence. That includes STEP-23's accusation, wage-deduction and firing words, so no explanation can label anyone a thief (L5), suggest deducting a loss from wages (L4) or present a flag as the basis for a firing (Slide 21). Matching is case-insensitive, on whole words, inside hyphenated words and next to punctuation.
@@ -28,6 +28,7 @@ Sources: Slide 12 ("Step 11 rejects any number that is not in the stored flag"),
 7. Property tests in `test_fact_checker.py` generate many flag rows. For each, (a) inserting any number, time or capitalised word not in the row into an accepted sentence makes it rejected, and (b) every `fact_line` output is accepted by `check_sentence` against its own row.
 8. `test_deny_list.py` checks every deny-list word in several casings and inflections, and checks that no template line is rejected.
 9. Fixtures hold only synthetic codes and placeholder names; no real names, values or Square ids.
+10. Every gate test pins `tillowl.config.V_ITEMS` explicitly with monkeypatch (BUILD_PLAN §7), so findings recorded after GO never change this frozen test.
 
 ## Out of scope
 - Choosing lines by V-item result (STEP-38).
@@ -51,7 +52,7 @@ You are running STEP-24 "Digest fact checker and deny-list (scenario 2)" for Til
 Start: git fetch && git rebase origin/main; confirm STEP-23 is "done" in docs/build/status/STEP-23.json (stop and say so if not); read git log -5; run CLAUDE.md's setup command; read @docs/build/steps/STEP-24-digest-fact-checker.md, @tillowl/digest/facts.py, the files in @tillowl/digest/templates/, @conftest.py (the staging_schema fixture), and Slides 3, 12, 13, 21, 24 in @docs/architecture-pack-part1.md and @docs/architecture-pack-part2.md.
 Step PR, test first:
 - Set docs/build/status/STEP-24.json status to "in_progress".
-- Write the three tests and two fixtures exactly as listed in docs/build/gates/STEP-24.txt, to the acceptance criteria (property tests, not only fixed examples). Run the two database-free tests by path; they fail (print RED TEST (intentional) if you stop here).
+- Write the three tests and two fixtures exactly as listed in docs/build/gates/STEP-24.txt, to the acceptance criteria (property tests, not only fixed examples; money as integer cents; V_ITEMS pinned with monkeypatch). Run the two database-free tests by path; they fail (print RED TEST (intentional) if you stop here).
 - Write tillowl/digest/checker.py. Run the two database-free tests by path and CLAUDE.md's test command; show each command and its output; never claim success without it. Commit; open the step PR with gh. It merges when CI is green.
 Done PR: after merge, the staging workflow runs job "gate STEP-24" on main. Take that run's id and its count: N passed (gh run view <id> --log). Make one commit on top of main holding only docs/build/evidence/STEP-24.md and status "done". Run python tools/check_evidence.py validate --step STEP-24, show the output, and open the PR with gh.
 Out of scope: V-item line choice, the model call, digest build and delivery, template edits.

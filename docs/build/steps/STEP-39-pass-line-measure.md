@@ -3,14 +3,14 @@
 Track: build. Lane: rules. Gate kind: ci_fixture. Size: S.
 Depends on: STEP-21 Go/no-go decision recorded, STEP-31 Square event ingestion. Done requires: none. Runs only if STEP-21 recorded GO (`runs_if: "GO"`). Also blocked by founder decision D10 until it is recorded as Resolved in BUILD_PLAN §12.
 Blocks: STEP-40 counsel review T17b (a D10 link-click count would change a template), STEP-43 pilot-readiness gate.
-Sources: Slide 26 (pass line: "voids + comps + discounts as a percent of net sales (sales after refunds), for 30 days before and 60 days after"; PASS ≥ 1 point, FAIL < 0.5 point or the owner stops opening the digest; 0.5–1 TBD; Square caveat; weekly 30-minute check-in), Slide 24 ("the pilot fails if the owner stops opening the digest"), Slide 28 (N13), Slide 29 (RK2, RK4), Slide 30 (V1, V8, T11); BUILD_PLAN design choices 10, 17, 18; D8, D10; `docs/build/go-no-go-criteria.md` §1–2.
+Sources: Slide 26 (pass line: "voids + comps + discounts as a percent of net sales (sales after refunds), for 30 days before and 60 days after"; PASS ≥ 1 point, FAIL < 0.5 point or the owner stops opening the digest; 0.5–1 TBD; Square caveat; weekly 30-minute check-in), Slide 24 ("the pilot fails if the owner stops opening the digest"), Slide 28 (N13), Slide 29 (RK2, RK4), Slide 30 (V1, V8, T11); BUILD_PLAN design choices 10, 17, 18, 48, 50; D8, D10; `docs/build/go-no-go-criteria.md` §1–2.
 
 ## Outcome
 `tillowl/rules/passline.py` computes, for one tenant:
 - the **before** figure over the 30 days ending the day before pilot day one (design choice 17), and the **after** figure over the 60 days from day one, each as (voids + comps + discounts) ÷ net sales × 100, net sales being sales after refunds; days are the restaurant's business days in its time zone (design choice 18);
 - the drop in points and a verdict: `PASS` (drop ≥ 1), `FAIL` (drop < 0.5, or the owner stopped opening the digest), the T11 result for 0.5 ≤ drop < 1, or `INCOMPLETE`;
 - the D10 opening measure, in the one variant D10 chose.
-`tillowl/jobs/passline_report.py --tenant pilot` runs the measure on production at day 90 (a founder-launched one-off job) and prints only `count: N days`, `passline: PASS|FAIL|T11_ZONE|INCOMPLETE` and `exit_code: 0`; its unit test sits beside the gate tests in `test_passline.py`.
+`tillowl/jobs/passline_report.py --tenant pilot` runs the measure on production at day 90 (a founder-launched one-off job) and prints only `count: N days`, `passline: PASS|FAIL|T11_ZONE|INCOMPLETE`, then `date: YYYY-MM-DD` and `exit_code: N`; its unit test sits beside the gate tests in `test_passline.py`.
 Pilot day one, the T11 rule and the substitute measure are read from `PASS_LINE` in `tillowl/config.py`. The founder supplies these values from the signed DPA (STEP-07). They are never invented.
 
 ## Acceptance criteria
@@ -19,7 +19,7 @@ Pilot day one, the T11 rule and the substitute measure are read from `PASS_LINE`
 3. 0.5–1 point: the verdict is the T11 value in `PASS_LINE`. If that value, day one, or (when V1 is not RETURNED) the substitute measure is unset, `passline` raises a named error. It never falls back to a default.
 4. Net sales of zero in a window raise a named error. No division happens and no verdict is given.
 5. Opening measure (`test_digest_opening_measure.py`), the D10 variant only:
-   - **weekly check-in:** after each weekly check-in (Slide 26) the founder records whether the owner opened the digest that week. A one-field console form, used by the owner or by the founder under support access (STEP-27), writes it through `audit()`; no new table.
+   - **weekly check-in:** after each weekly check-in (Slide 26) the founder records whether the owner opened the digest that week. A one-field console form, owner-only, writes it through `audit()`; no new table. A support session, even under an active grant, gets 403 on it (support access stays acknowledgments and shift windows only; design choice 50).
    - **disclosed link-click count:** each digest carries one disclosed link with no login code in it, and each click is recorded through `audit()`.
    In either variant, "stopped opening" is decided by the rule recorded with D10 in `PASS_LINE`, never by a number chosen here, and it makes the overall verdict `FAIL` whatever the drop.
 6. The measure uses restaurant-level totals only, never per-login values or display names. It imports nothing from `tillowl.explain`.

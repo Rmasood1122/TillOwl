@@ -10,9 +10,7 @@ Sources: Slide 21 (OAuth only; notice before monitoring), Slide 26 ("Every 'veri
 - **Jobs run.** The founder ran `square_live_report --tenant pilot --check` and `verify_deleted --tenant pilot --scope spike` as one-off jobs on the production host. Both exited 0.
 - **Findings.** `docs/build/findings/square-fields.md` holds only the `v_item:`, `field:` and `count:` lines that job printed. No values, no names.
 - **Audit log.** Every V-item result is in the audit log. The spike kept no per-login rows and no values, and `verify_deleted` proved zero spike rows remain.
-- **Evidence.** The evidence records:
-  - `backup_expires`;
-  - `oauth_connection: kept|revoked`, per D7.
+- **Evidence.** The evidence records `backup_expires` and `oauth_connection: kept|revoked` (D7).
 - **If revoked.** STEP-33 starts with the owner reconnecting, under human confirmation.
 
 ## Acceptance criteria
@@ -39,7 +37,7 @@ This step records the results; STEP-21 judges them against the accepted criteria
 - **V8:** If RETURNED, baselines start from STEP-34's history pull. If NOT_RETURNED or PARTIAL, hard stop 2 applies.
 
 ## Human confirmation
-Before the owner connects: "Founder: are the owner's signed authorization (STEP-06) and the posted notice (STEP-05) on file? Is D7 set as `SPIKE_OAUTH_AFTER` on the production service? Are `TILLOWL_HMAC_KEY` and `BACKUP_RETENTION_DAYS` (≤ 14) set? Is the release with STEP-19's code deployed by you? If so, have the owner sign in to the production console with TOTP, click Connect Square, approve the consent screen, and tell me 'connected'." Print AWAITING HUMAN CONFIRMATION and wait.
+Before the owner connects: "Founder: are the owner's signed authorization (STEP-06) and the posted notice (STEP-05) on file? Is D7 set as `SPIKE_OAUTH_AFTER`, and `BACKUP_RETENTION_DAYS` (≤ 14), on the production service environment, where `tillowl/config.py` reads them? Is `TILLOWL_HMAC_KEY` in the secret store? Is the release with STEP-19's code deployed by you? If so, have the owner sign in to the production console with TOTP, click Connect Square, approve the consent screen, and tell me 'connected'." Print AWAITING HUMAN CONFIRMATION and wait.
 
 ## Out of scope
 - Keeping any Square data after the spike.
@@ -50,9 +48,9 @@ Before the owner connects: "Founder: are the owner's signed authorization (STEP-
 ## Gate
 `python -m tillowl.jobs.square_live_report --tenant pilot --check && python -m tillowl.jobs.verify_deleted --tenant pilot --scope spike` (exact, from `docs/build/status/STEP-20.json`). Gate files: `docs/build/gates/STEP-20.txt` (`tillowl/jobs/square_live_report.py`, `tillowl/jobs/verify_deleted.py` and the report logic `tillowl/square/live_report.py`), all frozen once this step is done; STEP-22 reuses `verify_deleted --scope tenant` unchanged.
 
-The founder launches each command with `render jobs create` from their own terminal (unverified candidate, BUILD_PLAN §10). `docs/build/evidence/STEP-20.md` holds two blocks:
-- `square_live_report`: `exit_code: 0`, `job_id:`, its `v_item:`, `field:` and `count:` lines, `oauth_connection:`, then `sha256: <hex> label=findings` (from `sha256sum docs/build/findings/square-fields.md`), and `date:`;
-- `verify_deleted`: `exit_code: 0`, `job_id:`, `count: 0 rows_remaining`, `backup_expires:`, `date:`.
+The founder launches each command with `render jobs create` from their own terminal (unverified candidate, BUILD_PLAN §10). `docs/build/evidence/STEP-20.md` holds two blocks, each the job's pasted output (it ends `date:` then `exit_code: 0`, via STEP-08's `run_job`) plus its `job_id:`:
+- `square_live_report`: its `v_item:`, `field:` and `count:` lines and `oauth_connection:`, plus `sha256: <hex> label=findings` (from `sha256sum docs/build/findings/square-fields.md`);
+- `verify_deleted`: `count: 0 rows_remaining` and `backup_expires:`.
 
 ## If the gate fails
 - Never retry against the live account without the owner's OK.
@@ -70,15 +68,14 @@ Start:
 3. Run CLAUDE.md's setup command.
 4. Read @docs/build/steps/STEP-20-live-spike-run.md, @docs/build/go-no-go-criteria.md, and Slides 21, 26, 29, 30 in @docs/architecture-pack-part2.md.
 You never hold production credentials, never use the Render CLI, and never see a token, name or value.
-5. Set docs/build/status/STEP-20.json status to "in_progress". Print the human-confirmation line and AWAITING HUMAN CONFIRMATION; wait.
+5. Set docs/build/status/STEP-20.json status to "in_progress"; commit it alone and open the step PR with gh (it merges on review). Print the human-confirmation line and AWAITING HUMAN CONFIRMATION; wait.
 6. Print for the founder's own terminal:
    render jobs create <production service id> --start-command "python -m tillowl.jobs.square_live_report --tenant pilot --check"
    (unverified candidate). Ask for the job id, exit code and output; wait. If the exit code isn't 0, stop: follow "If the gate fails" and do not ask for a re-run without the owner's OK.
 7. Print the same command with --start-command "python -m tillowl.jobs.verify_deleted --tenant pilot --scope spike". Ask for the job id, exit code and output; wait.
-8. From the pasted output only, write docs/build/findings/square-fields.md (the v_item, field and count lines, in order). Run sha256sum on it and show the output. Commit the findings and the in_progress status, then open the step PR with gh; the founder approves, then re-runs founder-approval.
-Done PR (after that merges):
-9. Write docs/build/evidence/STEP-20.md (two blocks, per the Gate section) and set the status to "done".
-10. Run python tools/check_evidence.py validate --step STEP-20 and show its output. Open the PR with gh; the founder approves, then re-runs founder-approval. Say in it whether oauth_connection is kept or revoked; if revoked, STEP-33 starts with the owner reconnecting.
+Done PR (one commit on top of main holding only the findings, the evidence and the status; CI hash-checks the findings):
+8. From the pasted output only, write docs/build/findings/square-fields.md (the v_item, field and count lines, in order); run sha256sum on it and show the output. Write docs/build/evidence/STEP-20.md (two blocks, per the Gate section) and set the status to "done".
+9. Run python tools/check_evidence.py validate --step STEP-20 and show its output. Open the PR with gh; the founder approves, then re-runs founder-approval. Say in it whether oauth_connection is kept or revoked; if revoked, STEP-33 starts with the owner reconnecting.
 Out of scope: keeping Square data, roster read, history pull, rules, digests, the decision.
 Use a subagent to review the diff against this step file and report only gaps that affect correctness or the stated acceptance criteria.
 ```

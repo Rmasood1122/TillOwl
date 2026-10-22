@@ -17,6 +17,7 @@ Sources: Slide 4–5 (A1: the owner "sets digest preferences"), Slide 15–16 (S
 - An edit takes effect from the next business day. Events already ingested keep the shift STEP-31 tagged them with.
 - `settings.py`, digest settings:
   - digest days: 2 or 3 distinct weekdays (Slide 26);
+  - the owner's SMS phone (`owner_user.phone`, owner-only: a support user gets 403; changes audit-logged as `settings_changed` without the number itself), entered only after the owner's signed SMS opt-in (STEP-03);
   - channels: email, and SMS only when the owner's phone is on file. SMS still sends only when STEP-26's switch is on (design choice 20);
   - recipients are not a setting: the digest goes to the tenant's `owner_user` only. STEP-26's `run_digest` reads these days.
 - Every change, owner or support, writes one `settings_changed` audit row with actor, target, and before and after values (window times and weekdays are not personal data).

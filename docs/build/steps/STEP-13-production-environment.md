@@ -8,24 +8,21 @@ Sources: Slide 21 (encrypted tokens, key in the host's secret store, tenant isol
 ## Outcome
 Production exists on Render, separate from staging:
 - **Web service and Postgres.** Its own web service (the Owner Console, serving `SQUARE_REDIRECT_PATH` over HTTPS) and its own Render Postgres instance.
-- **Fresh secrets** in Render's secret store, never staging's: the database URL (internal), `TILLOWL_AES_KEY`, `TILLOWL_HMAC_KEY` (for STEP-19/20), the email key the watchdog alerts use, the Square production application credentials (if Square issues them only after approval, they're added in STEP-16; TBD — not in sources), `TILLOWL_ENV=production`, `TILLOWL_JOBS_ENABLED=refresh_tokens`, `TILLOWL_LLM_ENABLED=0`.
+- **Fresh secrets** in Render's secret store, never staging's: the database URL (internal), `TILLOWL_AES_KEY`, `TILLOWL_HMAC_KEY` (for STEP-19/20), the email key the watchdog alerts use, `TILLOWL_PUBLIC_URL`, `TILLOWL_ENV=production`, `TILLOWL_JOBS_ENABLED=refresh_tokens,watchdog`, `TILLOWL_LLM_ENABLED=0`. The Square production application id and secret are set here if Square has issued them; if Square issues them only after approval (TBD — not in sources), the founder sets them in STEP-16.
 - **Schema.** All migrations, with `FORCE ROW LEVEL SECURITY` on every tenant table.
 - **Deploys.** Auto-deploy off; every deploy manual and founder-confirmed. The founder runs `python -m tillowl.jobs.migrate --env production` as a one-off job at each deploy.
-- **Schedule.** Only a `refresh_tokens` cron job (with `watchdog` inside it) until STEP-43.
+- **Schedule.** Until STEP-43, one cron job whose command is `python -m tillowl.jobs.refresh_tokens && python -m tillowl.jobs.watchdog`, with `TILLOWL_JOBS_ENABLED=refresh_tokens,watchdog` (BUILD_PLAN §7).
 - **Database access.** External access closed (no IP allowlist entries; design choice 26).
 - **Backups.** A plan whose PITR window is inside the 14-day cap: 7 days on Pro per [Render backups](https://render.com/docs/postgresql-backups), unverified candidate. Whatever else Render keeps (exports) must also fall inside 14 days.
-- **Job modules.** `tillowl/jobs/restore_check.py` and `tillowl/jobs/redirect_check.py` (frozen when this step is done). `health_check` gains its production checks.
+- **Job modules.** `tillowl/jobs/restore_check.py` and `tillowl/jobs/redirect_check.py` (frozen when this step is done). `health_check` gains its production checks. Every job runs through STEP-08's `run_job`.
 - **Restore canary.** A `restore_canary` table (an operational table like `schema_migrations`: no tenant data, no RLS, policy, grant or role change).
 
 ## Acceptance criteria
-1. **`health_check --env production`** exits 0 only if all of these hold, and prints `count: 1 health_checks`, `date:`, `exit_code:`:
-   - `/healthz` at the production URL answers 200 over HTTPS with a valid certificate;
-   - every file in `migrations/` is recorded in `schema_migrations`;
-   - every tenant table has RLS forced;
-   - `TILLOWL_JOBS_ENABLED` is exactly `refresh_tokens`;
-   - `TILLOWL_LLM_ENABLED` is `0`;
-   - the AES and HMAC keys are present and the right length.
-   `test_health_check.py` makes it fail for each broken condition in turn.
+1. **`health_check --env production`** exits 0 only if all of these hold, and prints `count: 1 health_checks`, `release: <40-hex>`, `date:`, `exit_code:`:
+   - `/healthz` at the production URL answers 200 over HTTPS with a valid certificate and status ok;
+   - the release it reports is 40 lowercase hex characters;
+   - migrations are current: every file in `migrations/` is recorded in `schema_migrations` with a matching SHA-256.
+   It does **not** check which jobs are enabled, so it stays valid after STEP-43 (BUILD_PLAN §7); the jobs lockdown is a founder-confirmed item below. Key presence and length are covered by STEP-10's startup key check. `test_health_check.py` makes it fail for each broken condition in turn and passes with any `TILLOWL_JOBS_ENABLED` value.
 2. **`restore_check`.** `restore_check --env production --write-canary` (a preparation run, not the gate) writes a batch of random canary rows and audit-logs it. The gate run `restore_check --env production` then reads `TILLOWL_RESTORE_DATABASE_URL` (the restored instance) and compares that batch's row count and SHA-256 there and in production. It exits 0 only if they match, the batch has at least 1 row, and the restored URL is a different instance from production. It prints `count: N rows`, `sha256: <hex> label=restore_canary`, `date:`, `exit_code:`.
    `test_restore_check.py` uses two local databases and checks four cases:
    - match → 0;
@@ -33,7 +30,7 @@ Production exists on Render, separate from staging:
    - same database twice → 1;
    - variable unset → 1.
 3. **`redirect_check --env production`** builds the redirect URL from `TILLOWL_PUBLIC_URL` and `SQUARE_REDIRECT_PATH`. It exits 0 only if the scheme is `https`, the certificate verifies, and an unsigned-in GET reaches our console (sent to sign-in or rejected with 400), not a 404 or 5xx. Square's docs say the production redirect URL must use HTTPS ([move to production](https://developer.squareup.com/docs/oauth-api/movetoprod), unverified candidate). `test_redirect_check.py` covers http, a bad certificate, 404, 5xx and the good case with a stub server.
-4. **What jobs print.** Every job prints only evidence-grammar lines. On failure it prints `exit_code: 1` and one fixed reason code; never a URL, host, key or value.
+4. **What jobs print.** Every job prints only evidence-grammar lines, ending with `date:` then `exit_code:`. On failure it prints `exit_code: 1` and one fixed reason code; never a URL, host, key or value.
 5. **What the restored copy holds.** At this point production holds no tenant data, so the restored copy holds only the schema and the canary. The founder deletes it after the gate.
 6. **What runs.** Nothing in production runs the nightly, explain or digest jobs. Nothing calls Square with data scopes. Nothing sits in the restaurant's order or payment path (scenario 1).
 
@@ -41,6 +38,7 @@ Production exists on Render, separate from staging:
 "Founder: in Render, confirm the following.
 - Production has its own web service, cron job and Postgres, with freshly generated `TILLOWL_AES_KEY` and `TILLOWL_HMAC_KEY` and none of staging's secrets.
 - Auto-deploy is off, external database access has no allowlist entries, and the PITR window is within 14 days.
+- Jobs lockdown: the only cron job's command is `python -m tillowl.jobs.refresh_tokens && python -m tillowl.jobs.watchdog`, `TILLOWL_JOBS_ENABLED` is exactly `refresh_tokens,watchdog`, and `TILLOWL_LLM_ENABLED` is `0`.
 - You deployed this release manually and ran `migrate`.
 
 After the canary run, restore to a NEW instance at a time after the canary, set `TILLOWL_RESTORE_DATABASE_URL` for the restore_check job only, run the three gate jobs, then delete the restored instance and remove the variable." Print AWAITING HUMAN CONFIRMATION and wait.
@@ -53,7 +51,7 @@ Exact, from `docs/build/status/STEP-13.json`; each command is a Render one-off j
 
 `python -m tillowl.jobs.health_check --env production && python -m tillowl.jobs.restore_check --env production && python -m tillowl.jobs.redirect_check --env production`
 
-Gate files: `docs/build/gates/STEP-13.txt` (the two job modules and three tests). `docs/build/evidence/STEP-13.md` holds three blocks, each with `job_id:`, `exit_code: 0` and `date:`. The restore block also carries `count: N rows` and `sha256: … label=restore_canary`.
+Gate files: `docs/build/gates/STEP-13.txt` (the two job modules and three tests). `docs/build/evidence/STEP-13.md` holds three blocks, each with `job_id:`, then the job's lines ending `date:` and `exit_code: 0`. The restore block also carries `count: N rows` and `sha256: … label=restore_canary`.
 
 ## If the gate fails
 - Revert to the last green commit.

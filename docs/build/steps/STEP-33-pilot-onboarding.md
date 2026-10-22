@@ -6,23 +6,24 @@ Blocks: STEP-34 30-day history pull, STEP-43 pilot-readiness gate.
 Sources: Slide 16 (SHF "v1 windows set by owner"), Slide 21 (notice workflow steps 3 and 5; owner-only access; "Us (vendor): support access only when the owner allows it, and every access is in the audit log"), Slide 26 (before day one), Slide 29 (TD1, TD5), Slide 30 (T14, T16), ADR-006, ADR-007; BUILD_PLAN §1 (T16 paper, T14 owner sets windows), design choices 13, 14, 18, 19, 25, 29; D7; T17a code `roster_read_scope_approved`.
 
 ## Outcome
-**Code.** The step PR extends `tillowl/jobs/onboarding_report.py`. Its default mode (no flag) prints `count: N shift_windows`, `count: N acks_entered`, `count: N acks_mapped`, `count: N acks_unmapped` and `count: N logins_total`, in that order, then `exit_code: N`. It exits 1 if `shift_windows` is 0 or `acks_unmapped` is above 0. STEP-17's `--expect-2fa` mode is unchanged, and STEP-34 adds `--history`.
+**Code.** The step PR extends `tillowl/jobs/onboarding_report.py`. Its default mode (no flag) prints `count: N shift_windows`, `count: N notice_versions`, `count: N owner_phones`, `count: N acks_entered`, `count: N acks_mapped`, `count: N acks_unmapped` and `count: N logins_total`, in that order, then `date: YYYY-MM-DD` and `exit_code: N`. It exits 1 if `shift_windows` or `notice_versions` is 0 or `acks_unmapped` is above 0. Every job output in this step ends with `date:` then `exit_code:`. STEP-17's `--expect-2fa` mode is unchanged, and STEP-34 adds `--history`.
 
 **Production**, after that PR merges, in order:
 1. The founder deploys the release holding STEP-27, 28, 32 and this PR by hand, and runs `migrate`.
-2. If STEP-20's evidence says `oauth_connection: revoked` (D7), the owner reconnects Square in the console.
-3. The founder runs `roster_read`.
-4. The founder enrolls the production support sign-in once with `python -m tillowl.jobs.provision_support_user` (Render one-off job; STEP-27), then the owner grants time-boxed support access in the console.
-5. The owner sets the shift windows, or the founder does under the grant.
-6. The founder enters each paper acknowledgment and maps it to a login.
-7. The founder runs `onboarding_report`.
+2. The founder runs `provision_support_user --env production` (gate command 1; STEP-27; prints `count: 1 support_users`, `date:`, `exit_code:`) and enrolls via the TOTP link.
+3. If STEP-20's evidence says `oauth_connection: revoked` (D7), the owner reconnects Square in the console.
+4. The founder runs `roster_read` (gate command 2).
+5. The owner, in their own session (never support), records the notice version and its posting date (STEP-27's `staff_notice`) and the owner's phone for SMS on `owner_user`, then grants time-boxed support access (`support_access_grant`).
+6. The owner sets the shift windows, or the founder does under the grant.
+7. Only then the founder enters each paper acknowledgment and maps it to a login.
+8. The founder runs `onboarding_report` (gate command 3).
 
 Only `refresh_tokens` (with `watchdog`) stays scheduled (design choice 25).
 
 ## Acceptance criteria
-1. **Counts** (`test_onboarding_counts.py`, on `fresh_db`). The cases cover 0 or 2 windows, all acknowledgments mapped or one unmapped, and logins with display names. Each case prints exactly the five lines above, in order, plus `exit_code`, with the exit code the rule gives. No display name, team-member id or date is printed, and the `--expect-2fa` output is unchanged.
-2. **Production gate.** Both gate jobs exit 0 on production. The founder compares `acks_entered` with STEP-05's `staff_signed` count plus staff hired since, and explains any gap in the PR as counts only.
-3. **Grant and audit.** The founder enters and maps acknowledgments only while the owner's grant is active, and access after it ends is refused. Every grant, entry, mapping and window change writes an audit row (code from STEP-27 and STEP-28).
+1. **Counts** (`test_onboarding_counts.py`, on `fresh_db`). The cases cover 0 or 2 windows, 0 or 1 notice versions, 0 or 1 owner phones, all acknowledgments mapped or one unmapped, and logins with display names. Each case prints exactly the seven `count:` lines above, in order, then `date:` and `exit_code:`, with the exit code the rule gives. No display name, phone number, team-member id or event date is printed, and the `--expect-2fa` output is unchanged.
+2. **Production gate.** All three gate jobs exit 0 on production; `provision_support_user` prints `count: 1 support_users`. The founder compares `acks_entered` with STEP-05's `staff_signed` count plus staff hired since, and explains any gap in the PR as counts only.
+3. **Grant and audit.** The founder enters and maps acknowledgments only while the owner's grant is active, and access after it ends is refused. Every grant, entry, mapping and window change writes an audit row (code from STEP-27 and STEP-28). The notice version, posting date and owner phone are owner-only: a support session gets 403 (support stays limited to acknowledgments and shift windows).
 4. **No order data.** Nothing in this step reads orders: `nightly_pull`, `history_pull` and `run_rules` are not run, and `TILLOWL_JOBS_ENABLED` is unchanged.
 5. **Counsel branch.** If `roster_read_scope_approved: NO`, the founder first types each login code and Square team-member id from the Square dashboard into the mapping screen. `roster_read` then makes no Square call and counts those logins.
 6. **No staff names.** None appears in the session, PR, evidence or job output. The founder reads the paper acknowledgments in person and never pastes them.
@@ -32,7 +33,7 @@ Only `refresh_tokens` (with `watchdog`) stays scheduled (design choice 25).
 - **Login-bearing items** (V2, V7, and V3–V6 where they carry a login). If any is RETURNED: the mappings made here decide which logins can appear in flags. If none is RETURNED (shift-level-only GO): acknowledgments are still entered and mapped, and the exit rule is unchanged, but no login reaches a flag (STEP-31 strips them all).
 
 ## Human confirmation
-"Founder: confirm that the owner has agreed to onboarding on production now (the roster read of team-member ids and display names, the support-access grant, the shift windows), whether STEP-20 kept or revoked the OAuth connection (D7), and that you will enter and map the paper acknowledgments yourself in the console, outside this session, never pasting a staff name here."
+"Founder: confirm that the owner has agreed to onboarding on production now (the roster read of team-member ids and display names, the support-access grant, the shift windows), whether STEP-20 kept or revoked the OAuth connection (D7), that the owner will record the notice version, posting date and their SMS phone themselves before any acknowledgment is entered, and that you will enter and map the paper acknowledgments yourself in the console, outside this session, never pasting a staff name here."
 
 Print AWAITING HUMAN CONFIRMATION and wait.
 
@@ -40,7 +41,7 @@ Print AWAITING HUMAN CONFIRMATION and wait.
 The history pull (STEP-34); enabling any job besides `refresh_tokens`; changing the console screens built in STEP-27, 28 and 32; any staff name in the repo or the session.
 
 ## Gate
-`python -m tillowl.jobs.roster_read --tenant pilot && python -m tillowl.jobs.onboarding_report --tenant pilot` (exact, from the status file). The gate files are listed in `docs/build/gates/STEP-33.txt`: `tillowl/jobs/roster_read.py` (built in STEP-32, frozen once this step is done) and `tests/gates/step_33/test_onboarding_counts.py`. The founder launches each command as a Render one-off job from their own terminal: `render jobs create <production service id> --start-command "<command>"` (unverified candidate, BUILD_PLAN §10).
+`python -m tillowl.jobs.provision_support_user --env production && python -m tillowl.jobs.roster_read --tenant pilot && python -m tillowl.jobs.onboarding_report --tenant pilot` (exact, from the status file). The gate files are listed in `docs/build/gates/STEP-33.txt`: `tillowl/jobs/roster_read.py` (built in STEP-32, frozen once this step is done) and `tests/gates/step_33/test_onboarding_counts.py`. The founder launches each command as a Render one-off job from their own terminal: `render jobs create <production service id> --start-command "<command>"` (unverified candidate, BUILD_PLAN §10).
 
 `docs/build/evidence/STEP-33.md` holds one block per command: `command:`, `exit_code: 0`, `job_id:`, the job's `count:` lines and `date:`.
 
@@ -63,8 +64,8 @@ Work, test first:
 - Extend jobs/onboarding_report.py's default mode to the acceptance criteria. Run the test and CLAUDE.md's test command, and show both outputs.
 - Commit, then open the step PR with gh. It merges on review.
 Production (after merge):
-- Print the founder's checklist from the Outcome, in order, with the reconnect step if D7 was revoked and the counsel NO branch if it applies.
-- Print both commands, each wrapped as: render jobs create <production service id> --start-command "<command>"
+- Print the founder's checklist from the Outcome, in order, with the reconnect step if D7 was revoked, the owner-only notice and phone entry before any acknowledgment, and the counsel NO branch if it applies.
+- Print the three gate commands, in order, each wrapped as: render jobs create <production service id> --start-command "<command>"
 - Print AWAITING HUMAN CONFIRMATION, then wait for the pasted job id, exit code and output.
 Done PR: from the pasted output only, write docs/build/evidence/STEP-33.md (one block per command, with job_id and exit_code: 0) and set the status to "done". Run python tools/check_evidence.py validate --step STEP-33, show the output, and open the PR with gh. Its description says the founder approves, then re-runs founder-approval. Never claim success without output.
 Out of scope: the history pull, enabling jobs, staff names anywhere.

@@ -54,8 +54,10 @@ Drafting legal advice; the digest templates (that's T17b, STEP-40); signing anyt
 - the pasted block (command with `--date`, `exit_code: 0`, `sha256: … label=counsel_t17a`, `role: counsel`, `date:`);
 - then, in the same block, `sha256: <hex> label=findings` from `sha256sum docs/build/findings/counsel-t17a-answers.md`.
 
+One done PR holds the findings file, the evidence and the status; CI allows a step's `findings_path` in its done PR and checks its hash.
+
 ## If the gate fails
-`check_artifact.py` names the problem without paths: fix the file name or folder and re-run. Never move the copy into the repo. If counsel won't sign off, set the status to `blocked` with the reason as a code (for example `dpa_approved: NO`). The spike can't run until this is done.
+`check_artifact.py` names the problem without paths: fix the file name or folder and re-run. Never move the copy into the repo. If counsel won't sign off, set the status to `blocked` with the reason as a code (for example `dpa_approved: NO`). The spike can't run until this is done. Otherwise: revert to the last green commit; set the status to `blocked` with a `blocked_reason` that holds no names or values; after two failed attempts, restart in a fresh session with a narrower prompt.
 
 ## Prompt (paste into a fresh Claude Code session, run from an engineer's account)
 ```text
@@ -66,7 +68,7 @@ This is a human step. Never read $PRIVATE_EVIDENCE_DIR and never run tools/check
 2. Print the command for the founder's own terminal, with the D4 absolute path from BUILD_PLAN §1 written out:
    PRIVATE_EVIDENCE_DIR=<absolute path> python tools/check_artifact.py --step STEP-02 --label counsel_t17a --role counsel --date YYYY-MM-DD
    Then print the human-confirmation line and AWAITING HUMAN CONFIRMATION; wait.
-3. From the founder's reply only: write docs/build/findings/counsel-t17a-answers.md (code lines only), write docs/build/evidence/STEP-02.md from the pasted output plus the findings sha256 line, set status "done", run python tools/check_evidence.py validate --step STEP-02 and show the output, then open the PR with gh. Its description says the founder must approve and then re-run the founder-approval check.
+3. From the founder's reply only: write docs/build/findings/counsel-t17a-answers.md (code lines only), write docs/build/evidence/STEP-02.md from the pasted output plus the findings sha256 line, set status "done", run python tools/check_evidence.py validate --step STEP-02 and show the output, then open one PR with gh holding the findings file, the evidence and the status (CI hash-checks the findings). Its description says the founder must approve and then re-run the founder-approval check.
 Out of scope: legal drafting, templates, signatures.
 End: Use a subagent to review the diff against this step file and report only gaps that affect correctness or the stated acceptance criteria.
 ```

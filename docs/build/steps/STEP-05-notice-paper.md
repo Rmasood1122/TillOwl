@@ -32,7 +32,7 @@ Exact, from the status file. The founder runs it in their own terminal:
 The `ack_batch` run adds `--count <signed> --absent <n> --refused <n>`. `docs/build/evidence/STEP-05.md` holds the three pasted blocks: SHA-256, role, `count: … staff_signed/staff_absent/staff_refused`, and date.
 
 ## If the gate fails
-Fix the artifact name or folder and re-run. If the owner hasn't given the briefing or posted the notice, the step is not done: set the status to `blocked` with `blocked_reason: notice_not_posted` or `briefing_pending`.
+Fix the artifact name or folder and re-run. If the owner hasn't given the briefing or posted the notice, the step is not done: set the status to `blocked` with `blocked_reason: notice_not_posted` or `briefing_pending`. Otherwise: revert to the last green commit; set the status to `blocked` with a `blocked_reason` that holds no names or values; after two failed attempts, restart in a fresh session with a narrower prompt.
 
 ## Prompt (paste into a fresh Claude Code session, run from an engineer's account)
 ```text

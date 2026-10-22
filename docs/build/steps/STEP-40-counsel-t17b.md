@@ -40,15 +40,15 @@ The founder runs the first command in their own terminal. The session runs the s
 1. the founder's pasted block: command with `--date`, `exit_code: 0`, `sha256: … label=counsel_t17b`, `role: counsel`, `date:`;
 2. the manifest block: command, `exit_code: 0`, `sha256: … label=template_manifest`, `date:`.
 
-**Any later template change reopens T17b.** It needs a founder-approved gate-change PR that changes the templates and the manifest and sets STEP-40 back from `done`. STEP-40 then runs again, and STEP-43's `pilot-gate` fails until it is done.
+**Any later template change reopens T17b.** It needs a founder-approved gate-change PR that changes the templates and the manifest, sets STEP-40 back from `done` and deletes `docs/build/evidence/STEP-40.md`. STEP-40 then runs again, and STEP-43's `pilot-gate` fails until it is done.
 
 ## If the gate fails
-`check_artifact.py` names the problem without paths: fix the file name or folder and re-run. If `check_evidence.py manifest` reports a template that is missing or changed, or a hash other than the one counsel signed, stop: re-send the current set to counsel. If counsel won't sign off, set the status to `blocked` with `blocked_reason: t17b_changes_requested`.
+`check_artifact.py` names the problem without paths: fix the file name or folder and re-run. If `check_evidence.py manifest` reports a template that is missing or changed, or a hash other than the one counsel signed, stop: re-send the current set to counsel. If counsel won't sign off, set the status to `blocked` with `blocked_reason: t17b_changes_requested`. Otherwise: revert to the last green commit; set the status to `blocked` with a `blocked_reason` that holds no names or values; after two failed attempts, restart in a fresh session with a narrower prompt.
 
 ## Prompt (paste into a fresh Claude Code session, run from an engineer's account)
 ```text
 You are running STEP-40 "Counsel review T17b" for TillOwl. Follow @CLAUDE.md throughout.
-Start: git fetch && git rebase origin/main; confirm STEP-25, STEP-26, STEP-38 and STEP-41 are "done" in docs/build/status/ and "decision" in STEP-21.json is "GO" (stop and say which if not); read git log -5; run CLAUDE.md's setup command; read @docs/build/steps/STEP-40-counsel-t17b.md, @tillowl/digest/templates/MANIFEST.json, @docs/build/findings/llm-samples.md, and Slides 3, 13, 21, 24, 29, 30 in @docs/architecture-pack-part1.md and @docs/architecture-pack-part2.md.
+Start: git fetch && git rebase origin/main; confirm STEP-25, STEP-26, STEP-38, STEP-39 and STEP-41 are "done" in docs/build/status/ and "decision" in STEP-21.json is "GO" (stop and say which if not); read git log -5; run CLAUDE.md's setup command; read @docs/build/steps/STEP-40-counsel-t17b.md, @tillowl/digest/templates/MANIFEST.json, @docs/build/findings/llm-samples.md, and Slides 3, 13, 21, 24, 29, 30 in @docs/architecture-pack-part1.md and @docs/architecture-pack-part2.md.
 This is a human step. Never read $PRIVATE_EVIDENCE_DIR and never run tools/check_artifact.py yourself.
 1. Run python tools/check_evidence.py manifest and show the output. Print the review package for the founder to send counsel: the commit SHA (git rev-parse HEAD), the manifest SHA-256, each manifest file with its hash, the llm-samples.md SHA-256 (sha256sum), and the questions in acceptance criterion 2.
 2. Print the command for the founder's own terminal, with the D4 absolute path from BUILD_PLAN §1 written out:

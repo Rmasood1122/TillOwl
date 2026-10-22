@@ -1,7 +1,7 @@
 # STEP-25 Explanation service with the model stubbed
 
 Track: build. Lane: explain. Gate kind: ci_fixture. Size: M.
-Depends on: STEP-08 Repo skeleton, STEP-23 Fact templates and template manifest (the explanation prompt file). Done requires: none.
+Depends on: STEP-08 Repo skeleton, STEP-23 Fact templates and template manifest (it reads STEP-23's `explain_prompt.txt`). Done requires: none.
 Blocks: STEP-26 digest build and delivery, STEP-40 counsel review T17b.
 Sources: Slide 5 (A7 "Flagged facts only; never full history"), Slide 9 / 11 (C11 = V9, C14 = V10), Slide 13 (flow steps 8–10: "Facts of each flag; login codes, no full history"), Slide 19 (LLM ~$1 a month at $0.10/$0.50 per million; T8 gap), Slide 21 (least data to vendors; no AI training), Slide 22 (lean cost), Slide 30 (T8), ADR-002; BUILD_PLAN §7 (job switches), design choices 1, 14, 21, 22; D11.
 
@@ -31,7 +31,8 @@ Unverified candidate, which the session must re-check against the current Anthro
 4. `test_llm_switch.py` covers `TILLOWL_LLM_ENABLED` unset, `0`, `false` and `1`: only `1` builds a client. In the other cases the stub records zero calls and zero explanation and usage rows.
 5. A client error or timeout writes no explanation row for that batch and exits non-zero with a reason code; no retry storm. The digest then uses template lines (P5: off the service path).
 6. `claude-haiku-5-5` appears in exactly one place in `tillowl/`; no other model id appears there.
-7. If `explanation` or `llm_usage` is missing from STEP-08's schema, stop and set `blocked` (`needs_schema_tables`). Adding a tenant table needs RLS, so it comes through a gate-change migration (design choice 33).
+7. Gate tests pin `tillowl.config.V_ITEMS` explicitly with monkeypatch wherever a payload field could depend on it (BUILD_PLAN §7); no test reads `square-fields.md`.
+8. If `explanation` or `llm_usage` is missing from STEP-08's schema, stop and set `blocked` (`needs_schema_tables`). Adding a tenant table needs RLS, so it comes through a gate-change migration (design choice 33).
 
 ## Out of scope
 - Any real model call. Real calls happen only in STEP-41, in the founder's terminal.
@@ -51,11 +52,11 @@ Revert to the last green commit. Set `blocked` with a `blocked_reason` (no names
 ## Prompt (paste into a fresh Claude Code session)
 ```text
 You are running STEP-25 "Explanation service with the model stubbed" for TillOwl. Follow @CLAUDE.md throughout.
-Start: git fetch && git rebase origin/main; confirm STEP-08 is "done" in docs/build/status/STEP-08.json (stop and say so if not); read git log -5; run CLAUDE.md's setup command; read @docs/build/steps/STEP-25-explanation-service.md, @tillowl/config.py, the migrations in @migrations/, and Slides 5, 13, 19, 21, 22, 30 in @docs/architecture-pack-part1.md and @docs/architecture-pack-part2.md. If tillowl/digest/templates/explain_prompt.txt is not on main yet (STEP-23), set status "blocked" with blocked_reason needs_step_23_prompt and stop.
+Start: git fetch && git rebase origin/main; confirm STEP-08 and STEP-23 are "done" in docs/build/status/ (stop and say which if not); read git log -5; run CLAUDE.md's setup command; read @docs/build/steps/STEP-25-explanation-service.md, @tillowl/config.py, the migrations in @migrations/,, @tillowl/digest/facts.py, @tillowl/digest/templates/explain_prompt.txt (STEP-23; read it, never edit it) and Slides 5, 13, 19, 21, 22, 30 in @docs/architecture-pack-part1.md and @docs/architecture-pack-part2.md.
 Before writing code, use WebFetch on the current Anthropic docs (effort, extended thinking, token counting, the Messages API usage object) and the installed anthropic SDK. Confirm how effort is set, how tokens are counted, and how thinking tokens appear in usage; cite each URL in the PR description. Use no parameter name you have not seen there.
 Step PR, test first:
 - Set docs/build/status/STEP-25.json status to "in_progress".
-- Write the three tests and the fixture exactly as listed in docs/build/gates/STEP-25.txt, to the acceptance criteria. Use synthetic flags only and a stub client; no network. Run them; they fail (print RED TEST (intentional) if you stop here).
+- Write the three tests and the fixture exactly as listed in docs/build/gates/STEP-25.txt, to the acceptance criteria. Use synthetic flags only and a stub client; no network; pin V_ITEMS with monkeypatch where relevant. Run them; they fail (print RED TEST (intentional) if you stop here).
 - Write tillowl/explain/ and tillowl/jobs/run_explain.py. Run the gate command and CLAUDE.md's test command; show each command and its output; never claim success without it. Commit; open the step PR with gh. It merges when CI is green.
 Done PR: one commit on top of main holding only docs/build/evidence/STEP-25.md and status "done". run_id is the green ci push run on main for that commit's parent, and count: N passed comes from that run (gh run view <id> --log). Run python tools/check_evidence.py validate --step STEP-25, show the output, and open the PR with gh.
 Out of scope: real model calls, the checker, digest delivery, the prompt file's wording, enabling production LLM calls.

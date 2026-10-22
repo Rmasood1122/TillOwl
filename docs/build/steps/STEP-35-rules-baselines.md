@@ -3,7 +3,7 @@
 Track: build. Lane: rules. Gate kind: ci_fixture. Size: M. Runs only if STEP-21 recorded GO.
 Depends on: STEP-21 go/no-go decision recorded (GO), STEP-28 console shift windows and digest settings, STEP-31 Square event ingestion (scenario 1), STEP-32 roster-read job and acknowledgment mapping. Done requires: none.
 Blocks: STEP-36 flags A (cancelled orders, item voids, approval codes, no-sale opens).
-Sources: Slide 3 (P2 "every flag can be reproduced without the model"), Slides 12–13 (flow steps 3–5: "Cancelled-order, comp, discount, refund and no-sale counts; shares of net sales"; "Baseline per login and shift window"), Slides 17–18 (BAS "login, shift window, metric, normal range"; Q8), Slide 26 (net sales = "sales after refunds"), Slide 29 (TD4), ADR-002, ADR-006; BUILD_PLAN design choices 15, 16, 18.
+Sources: Slide 3 (P2 "every flag can be reproduced without the model"), Slides 12–13 (flow steps 3–5: "Cancelled-order, comp, discount, refund and no-sale counts; shares of net sales"; "Baseline per login and shift window"), Slides 17–18 (BAS "login, shift window, metric, normal range"; Q8), Slide 26 (net sales = "sales after refunds"), Slide 29 (TD4), ADR-002, ADR-006; BUILD_PLAN design choices 15, 16, 18; T17a code `pre_notice_history`.
 
 ## Outcome
 **`tillowl/rules/ratios.py`.** `ratios(tenant, business_day)` reads the day's stored events and returns rows in process (Slide 13 step 4; no table). Each row is keyed by login (or none) and owner-set shift window, and holds:
@@ -12,10 +12,11 @@ Sources: Slide 3 (P2 "every flag can be reproduced without the model"), Slides 1
 
 **`tillowl/rules/baselines.py`.** `update_baselines(tenant, business_day)` upserts `baseline` rows: `login_id`, `shift_id`, metric, normal range and the number of shifts used.
 - Per-login rows exist only for logins whose acknowledgment is on file, including new hires once their acknowledgment is entered.
+- Which events feed a login's baseline branches on `COUNSEL.pre_notice_history` (T17a), always measured against `acknowledgment.signed_at` (the paper signing date), never the date it was entered: `TOTALS_ONLY` → only that login's events on or after `signed_at`; `PER_LOGIN_ALLOWED` → STEP-34's history-pull events of that login from before `signed_at` may feed it too. With 8 shifts needed, day one may have few per-login baselines either way.
 - Window-level rows (`login_id` null) cover restaurant totals, stripped events included.
 - Normal range (design choice): the median and the median absolute deviation over the trailing 30 business days the login worked that window. A baseline exists only after at least 8 such shifts. Both numbers are module constants, hand-tuned per restaurant (TD4).
 
-**`tillowl/jobs/run_rules.py`** (`--tenant … --date YYYY-MM-DD`) runs steps 3–5 for now, and STEP-36 and 37 add flags and the ranker. It prints only `count: N rows` and `exit_code: N`, and stays off in production until STEP-43.
+**`tillowl/jobs/run_rules.py`** (`--tenant … --date YYYY-MM-DD`) runs steps 3–5 for now, and STEP-36 and 37 add flags and the ranker. It prints only `count: N rows`, then `date:` and `exit_code: N`, and stays off in production until STEP-43.
 
 Plain code only: no model and no network (P2, ADR-002).
 
@@ -28,12 +29,12 @@ Plain code only: no model and no network (P2, ADR-002).
    - A static check fails if anything under `tillowl/rules/` imports `tillowl.explain` or `anthropic`.
 2. **Baselines only for acknowledged logins** (`test_baselines_ack_only.py`).
    - A per-login baseline exists only for logins whose acknowledgment is entered and mapped.
-   - A login acknowledged on fixture day 20 gets a baseline built only from events on or after that day, and has none before 8 shifts.
+   - With `COUNSEL` pinned (monkeypatch) to `TOTALS_ONLY`, a login whose `signed_at` is fixture day 20 (entered on day 25) gets a baseline built only from events on or after day 20, and has none before 8 such shifts. Pinned to `PER_LOGIN_ALLOWED`, its earlier fixture events also feed it. An entry date never moves the cut-off.
    - Unacknowledged logins appear only in window-level rows.
    - A planted login-tagged event of an unacknowledged login is ignored and creates no row (defence in depth on top of STEP-31's stripping).
    - A re-run upserts and never duplicates.
 3. **Branches through `V_ITEMS` only.**
-   - With every item RETURNED, every metric is present.
+   - Tests pin `V_ITEMS` explicitly (monkeypatch). With every item RETURNED, every metric is present.
    - With every item NOT_RETURNED, and again with PARTIAL, each gated metric listed below has no row (not a zero row). The per-login rows for V2- and V7-gated metrics disappear, and their window-level rows remain.
 
 ## V-item branches
@@ -63,7 +64,7 @@ Start:
 2. Confirm STEP-21, STEP-28, STEP-31 and STEP-32 are "done" in docs/build/status/, and that STEP-21's "decision" is "GO". If not, stop and say which.
 3. Read git log -5.
 4. Run CLAUDE.md's setup command.
-5. Read @docs/build/steps/STEP-35-rules-baselines.md, @tillowl/config.py (V_ITEMS), @tillowl/square/ingest.py, and Slides 3, 12, 13, 17, 18, 26 and 29 in @docs/architecture-pack-part1.md and @docs/architecture-pack-part2.md.
+5. Read @docs/build/steps/STEP-35-rules-baselines.md, @tillowl/config.py (V_ITEMS, COUNSEL), @tillowl/square/ingest.py, and Slides 3, 12, 13, 17, 18, 26 and 29 in @docs/architecture-pack-part1.md and @docs/architecture-pack-part2.md.
 Work, test first:
 - Set docs/build/status/STEP-35.json status to "in_progress".
 - Write the two tests and the fixture exactly as listed in docs/build/gates/STEP-35.txt. Hand-count the expected block before writing any code.

@@ -32,10 +32,10 @@ The explanation service code (STEP-25); delivery code (STEP-26); SMS terms (STEP
 Exact, from the status file. The founder runs it in their own terminal:
 `python tools/check_artifact.py --step STEP-04 --label terms_t5 --role vendor && python tools/check_artifact.py --step STEP-04 --label terms_t8 --role vendor`
 
-The evidence holds both pasted blocks; the last block also carries `sha256: <hex> label=findings`.
+The evidence holds both pasted blocks; the last block also carries `sha256: <hex> label=findings`. One done PR holds the findings file, the evidence and the status; CI allows the step's `findings_path` in its done PR and checks its hash.
 
 ## If the gate fails
-Fix the artifact name or folder and re-run. If the terms can't be obtained, set the status to `blocked` with `blocked_reason: t8_terms_unavailable` and raise D11 with the founder.
+Fix the artifact name or folder and re-run. If the terms can't be obtained, set the status to `blocked` with `blocked_reason: t8_terms_unavailable` and raise D11 with the founder. Otherwise: revert to the last green commit; set the status to `blocked` with a `blocked_reason` that holds no names or values; after two failed attempts, restart in a fresh session with a narrower prompt.
 
 ## Prompt (paste into a fresh Claude Code session, run from an engineer's account)
 ```text
@@ -44,7 +44,7 @@ Start: git fetch && git rebase origin/main; no depends_on; read git log -5; run 
 This is a human step. Never read $PRIVATE_EVIDENCE_DIR and never run tools/check_artifact.py yourself.
 1. Use WebFetch to find Anthropic's and Resend's current official commercial or data-processing terms pages; print the URLs and the exact clauses that bear on training and data use, labelled unverified until the founder saves a copy.
 2. Print both commands for the founder's own terminal, with the D4 absolute path from BUILD_PLAN §1 written out (PRIVATE_EVIDENCE_DIR=<path> python tools/check_artifact.py ... --date YYYY-MM-DD), then the human-confirmation line and AWAITING HUMAN CONFIRMATION; wait.
-3. From the founder's reply only: write docs/build/findings/vendor-terms.md, write docs/build/evidence/STEP-04.md from the pasted output plus the findings sha256 line, set status "done", run python tools/check_evidence.py validate --step STEP-04 and show the output, then open the PR with gh (founder approves, then re-runs founder-approval). If T8 is NOT_CONFIRMED, stop and tell the founder D11 needs a gate-change PR first.
+3. From the founder's reply only: write docs/build/findings/vendor-terms.md, write docs/build/evidence/STEP-04.md from the pasted output plus the findings sha256 line, set status "done", run python tools/check_evidence.py validate --step STEP-04 and show the output, then open one PR with gh holding the findings file, the evidence and the status (founder approves, then re-runs founder-approval). If T8 is NOT_CONFIRMED, stop and tell the founder D11 needs a gate-change PR first.
 Out of scope: model or email code.
 End: Use a subagent to review the diff against this step file and report only gaps that affect correctness or the stated acceptance criteria.
 ```

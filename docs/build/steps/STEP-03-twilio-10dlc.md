@@ -35,10 +35,10 @@ Sending any SMS (STEP-26 stubs it; STEP-43 sends the first real one), the digest
 Exact, from `docs/build/status/STEP-03.json`. The founder runs it in their own terminal:
 `python tools/check_artifact.py --step STEP-03 --label sms_optin --role owner && python tools/check_artifact.py --step STEP-03 --label tendlc_approval --role vendor && python tools/check_artifact.py --step STEP-03 --label terms_t6 --role vendor`
 
-`docs/build/evidence/STEP-03.md` holds the three pasted blocks. The last block also carries `sha256: <hex> label=findings` for the findings file.
+`docs/build/evidence/STEP-03.md` holds the three pasted blocks. The last block also carries `sha256: <hex> label=findings` for the findings file. One done PR holds the findings file, the evidence and the status; CI allows the step's `findings_path` in its done PR and checks its hash.
 
 ## If the gate fails
-Fix the artifact name or folder and re-run. If Twilio rejects the registration, set the status to `blocked` with `blocked_reason: tendlc_rejected` and resubmit. Email-only digests can still run on staging meanwhile.
+Fix the artifact name or folder and re-run. If Twilio rejects the registration, set the status to `blocked` with `blocked_reason: tendlc_rejected` and resubmit. Email-only digests can still run on staging meanwhile. Otherwise: revert to the last green commit; set the status to `blocked` with a `blocked_reason` that holds no names or values; after two failed attempts, restart in a fresh session with a narrower prompt.
 
 ## Prompt (paste into a fresh Claude Code session, run from an engineer's account)
 ```text
@@ -47,7 +47,7 @@ Start: git fetch && git rebase origin/main; no depends_on; read git log -5; run 
 This is a human step. Never read $PRIVATE_EVIDENCE_DIR and never run tools/check_artifact.py yourself.
 1. Use WebFetch on Twilio's official 10DLC registration docs and print a short checklist for the founder, citing each URL as an unverified candidate. Ask which legal entity registers (D15) if BUILD_PLAN §12 doesn't record it yet.
 2. Print the three commands for the founder's own terminal, with the D4 absolute path from BUILD_PLAN §1 written out (PRIVATE_EVIDENCE_DIR=<path> python tools/check_artifact.py ... --date YYYY-MM-DD), then the human-confirmation line and AWAITING HUMAN CONFIRMATION; wait.
-3. From the founder's reply only: write docs/build/findings/twilio-10dlc.md, write docs/build/evidence/STEP-03.md from the pasted output plus the findings sha256 line, set status "done", run python tools/check_evidence.py validate --step STEP-03 and show the output, then open the PR with gh (founder approves, then re-runs founder-approval).
+3. From the founder's reply only: write docs/build/findings/twilio-10dlc.md, write docs/build/evidence/STEP-03.md from the pasted output plus the findings sha256 line, set status "done", run python tools/check_evidence.py validate --step STEP-03 and show the output, then open one PR with gh holding the findings file, the evidence and the status (founder approves, then re-runs founder-approval).
 Out of scope: sending SMS, digest wording, email vendor.
 End: Use a subagent to review the diff against this step file and report only gaps that affect correctness or the stated acceptance criteria.
 ```

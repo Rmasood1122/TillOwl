@@ -7,12 +7,12 @@ Sources: Slide 22 (lean line ~$20–25: tokens ~$1 = 8.1M in + 0.56M out at $0.1
 
 ## Outcome
 - `tillowl/jobs/cost_estimate.py`: `--sample PATH [--live] [--check] [--findings PATH]`, findings default `docs/build/findings/llm-samples.md`. It reads only the sample file and opens no database connection.
-  - It builds each synthetic digest with STEP-26's `tillowl/digest/build.py` and makes each explanation call through STEP-25's `tillowl/explain/`, so the prompt, the pinned model, the low effort and the token metering are the production ones. Without `--live` it uses STEP-25's stub client and makes no network call. With `--live` it calls the real model.
+  - It renders each synthetic digest with STEP-26's pure `render_digest(flags, explanations)` from `tillowl/digest/build.py` (never `build_digest`, which reads the database), so it opens no database connection, and makes each explanation call through STEP-25's `tillowl/explain/`, so the prompt, the pinned model, the low effort and the token metering are the production ones. Without `--live` it uses STEP-25's stub client and makes no network call. With `--live` it calls the real model.
   - It measures tokens in, out and thinking. It extrapolates them to a month at 2 and at 3 digests a week (4.33 weeks a month, design choice), and the `usd_month` lines use 3 a week.
   - It counts SMS segments from the digest bodies. The segment rule is taken from Twilio's official docs, and the findings cite the URL as an unverified candidate.
   - It adds the fixed monthly costs: Render web (production and staging), Render cron (every cron job in both environments), both Postgres instances (staging is a second database, T9), email, and the SMS number and 10DLC campaign fees.
 - Prices are never in code or the fixture. Under `--live` the job asks the founder for each price line, with its https source URL and the date it was checked: token in/out per million (≤100k-token tier), SMS per segment, SMS fixed fees, `hosting_web`, `hosting_cron`, `db_staging`, `db_production` and `email`. Re-check every price page on the day of the run. The ~$1 token line assumed $0.10/$0.50 per million for prompts of 100k tokens or fewer.
-- Output, evidence-grammar lines only: `count:` in units `sample_flags`, `tokens_in`, `tokens_out`, `tokens_thinking`, `sms_segments`; `model_id: claude-haiku-5-5`; `usd_month:` in units `tokens`, `sms`, `hosting_web`, `hosting_cron`, `db_staging`, `db_production`, `email`, `total`, `lean_line`; `sha256: … label=findings`; `date:`; `exit_code:`.
+- Output, evidence-grammar lines only: `count:` in units `sample_flags`, `tokens_in`, `tokens_out`, `tokens_thinking`, `sms_segments`; `model_id: claude-haiku-5-5`; `usd_month:` in units `tokens`, `sms`, `hosting_web`, `hosting_cron`, `db_staging`, `db_production`, `email`, `total`, `lean_line`; `sha256: … label=findings`; and it ends with `date:` then `exit_code:`.
 - `--live` writes `docs/build/findings/llm-samples.md` (synthetic data only), for counsel's T17b review in STEP-40. Its sections:
   - **Samples:** each synthetic flag's facts (login codes only), the model's sentence, and STEP-24's checker verdict (kept, or replaced by the template line).
   - **Cost inputs:** each price line with its unit, USD amount, source URL and date checked. The founder must accept this added section.
@@ -31,10 +31,11 @@ Sources: Slide 22 (lean line ~$20–25: tokens ~$1 = 8.1M in + 0.56M out at $0.1
 7. No price constant exists in `cost_estimate.py` or the fixture. A price line with a blank, negative or non-https source is rejected. The test passes prices in-process, never through a file in the repo.
 8. Stdout holds only evidence-grammar lines. The test checks every line against `tools/check_evidence.py`'s `LINE_RULES`. No URL, sentence or name is printed.
 9. The `sha256: … label=findings` line equals the SHA-256 of the file written. A model sentence that STEP-24's checker rejects is recorded as replaced, so counsel sees both.
-10. Without `--live`, the test blocks sockets and the job still exits 0. CI never runs `--live`; this test runs in the normal test command on every PR.
+10. The test makes any database connection attempt raise; the job never opens one, and the rendered bodies equal `render_digest` on the same synthetic flags. The last two output lines are `date:` and `exit_code:`.
+11. Without `--live`, the test blocks sockets and the job still exits 0. CI never runs `--live`; this test runs in the normal test command on every PR.
 
 ## V-item branches
-Digest bodies, and so SMS segments, follow `tillowl/config.py` `V_ITEMS` as recorded from `docs/build/findings/square-fields.md`, never a per-call-site flag. The offline test runs both the all-RETURNED and the all-NOT_RETURNED configuration. The live run uses the recorded one.
+Digest bodies, and so SMS segments, follow `tillowl/config.py` `V_ITEMS` as recorded from `docs/build/findings/square-fields.md`, never a per-call-site flag. The offline test pins `V_ITEMS` with monkeypatch and runs both the all-RETURNED and the all-NOT_RETURNED configuration. The live run uses the recorded one.
 - V1: If RETURNED, dollar totals appear in cancelled-order lines. If NOT_RETURNED or PARTIAL, no dollar amounts.
 - V2: If RETURNED: "9 checks cancelled during shift Y (opened by login X)". If NOT_RETURNED or PARTIAL: "9 checks cancelled during shift Y".
 - V4: If RETURNED, "approved by code Y" is added. If NOT_RETURNED or PARTIAL, it is left out.
@@ -67,7 +68,7 @@ Start: git fetch && git rebase origin/main; confirm STEP-26 and STEP-37 are "don
 Work, test first:
 - Set docs/build/status/STEP-41.json status to "in_progress".
 - Write tests/gates/step_41/test_cost_estimate_offline.py and fixtures/cost_sample.json exactly as listed in docs/build/gates/STEP-41.txt (synthetic login codes only; lean_line_usd as the founder states it); run them; they fail (print RED TEST (intentional) if you stop here).
-- Implement tillowl/jobs/cost_estimate.py to the acceptance criteria, reusing tillowl/explain/ and tillowl/digest/build.py. Use WebFetch on Twilio's official SMS segment docs and Anthropic's official pricing and models pages; print the URLs as unverified candidates for the founder. Put no price in code.
+- Implement tillowl/jobs/cost_estimate.py to the acceptance criteria, reusing tillowl/explain/ and STEP-26's pure render_digest (no database connection; output ends with date: and exit_code:). Use WebFetch on Twilio's official SMS segment docs and Anthropic's official pricing and models pages; print the URLs as unverified candidates for the founder. Put no price in code.
 - Run the test command from CLAUDE.md and show the output; commit; open the step PR with gh.
 Human gate: print the human-confirmation line, then the founder's command
   python -m tillowl.jobs.cost_estimate --sample tests/gates/step_41/fixtures/cost_sample.json --live --check
