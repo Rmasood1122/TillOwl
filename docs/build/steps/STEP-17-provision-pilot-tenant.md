@@ -1,7 +1,7 @@
 # STEP-17 Provision the friend's tenant and owner two-factor
 
 Track: build. Lane: platform. Gate kind: production_job. Size: S.
-Depends on: STEP-06 Owner signs the spike authorization and support-access permission, STEP-13 Production environment, STEP-14 Provision our own production tenant (it freezes `provision_tenant`, which STEP-10 built with `--kind own|pilot`). Done requires: none.
+Depends on: STEP-06 Owner signs the spike authorization and support-access permission, STEP-13 Production environment, STEP-14 Provision our own production tenant (it freezes `provision_tenant --kind own|pilot`, built earlier in the console lane). Done requires: none.
 Blocks: STEP-20 Run the read-only live spike.
 Sources: Slide 11 (OWN, CON), Slides 17–18 (Owner user: "the only sign-in"; Q1 has 1 owner login; Q5 audit), Slide 21 (owner-only access with two-factor, no staff accounts, who sees what), Slide 24 (scenario 3), ADR-006; BUILD_PLAN §3, §7, design choices 4, 25, 29.
 

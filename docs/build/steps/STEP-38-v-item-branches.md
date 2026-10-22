@@ -2,7 +2,7 @@
 
 Track: build. Lane: digest. Gate kind: ci_fixture. Size: S.
 Depends on: STEP-21 Go/no-go decision recorded, STEP-24 Digest fact checker and deny-list, STEP-37 Flags B and the ranker. Done requires: none. Runs only if STEP-21 recorded GO (`runs_if: "GO"`).
-Blocks: STEP-40 counsel review T17b, STEP-43 pilot-readiness gate.
+Blocks: STEP-40 counsel review T17b, STEP-41 metered cost estimate, STEP-43 pilot-readiness gate.
 Sources: Slide 12 (target sentence; day-one sentence "9 checks cancelled during shift Y (opened by login X)"), Slide 13 step 11, Slide 21 (fact-based wording; workflow step 5), Slide 24 (scenario 2), Slide 3 (P4, P7, L4, L5), Slide 30 (rule: nothing unconfirmed appears in a digest), ADR-004, ADR-006; BUILD_PLAN design choices 10, 12, 16, 23, 24, 32; D8; `docs/build/go-no-go-criteria.md` §2.
 
 ## Outcome

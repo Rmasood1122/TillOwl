@@ -61,7 +61,7 @@ Work, test first:
 - Fix any such bug in tillowl/jobs/provision_tenant.py (it freezes when this step is done) so every acceptance criterion holds for all valid inputs. Email is stubbed in tests.
 - Run CLAUDE.md's test command and show the output; commit; open the step PR with gh (it merges on review).
 After merge: print the human-confirmation line and the one-off job command (render jobs create <production service id> --start-command "python -m tillowl.jobs.provision_tenant --kind own"; unverified candidate syntax), then AWAITING HUMAN CONFIRMATION; wait.
-Done PR: from the founder's pasted output only, write docs/build/evidence/STEP-14.md (job_id, exit_code: 0, count: 1 tenants, date), set status "done", run python tools/check_evidence.py validate --step STEP-14 and show the output, open the PR with gh; the founder approves and re-runs founder-approval. Never claim success without pasted output.
+Done PR: from the founder's pasted output only, write docs/build/evidence/STEP-14.md (job_id, count: 1 tenants, date, exit_code: 0), set status "done", run python tools/check_evidence.py validate --step STEP-14 and show the output, open the PR with gh; the founder approves and re-runs founder-approval. Never claim success without pasted output.
 Out of scope: running --kind pilot, production OAuth, enrollment screens, onboarding_report.
 Use a subagent to review the diff against this step file and report only gaps that affect correctness or the stated acceptance criteria.
 ```

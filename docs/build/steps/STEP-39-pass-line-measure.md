@@ -11,7 +11,7 @@ Sources: Slide 26 (pass line: "voids + comps + discounts as a percent of net sal
 - the drop in points and a verdict: `PASS` (drop ≥ 1), `FAIL` (drop < 0.5, or the owner stopped opening the digest), the T11 result for 0.5 ≤ drop < 1, or `INCOMPLETE`;
 - the D10 opening measure, in the one variant D10 chose.
 `tillowl/jobs/passline_report.py --tenant pilot` runs the measure on production at day 90 (a founder-launched one-off job) and prints only `count: N days`, `passline: PASS|FAIL|T11_ZONE|INCOMPLETE`, then `date: YYYY-MM-DD` and `exit_code: N`; its unit test sits beside the gate tests in `test_passline.py`.
-Pilot day one, the T11 rule and the substitute measure are read from `PASS_LINE` in `tillowl/config.py`. The founder supplies these values from the signed DPA (STEP-07). They are never invented.
+Pilot day one, the T11 rule and the substitute measures are read by `PASS_LINE` in `tillowl/config.py` from the service environment (BUILD_PLAN §7). The founder sets those variables on the production service from the signed DPA (STEP-07); tests set them explicitly. They are never invented.
 
 ## Acceptance criteria
 1. Given `tests/gates/step_39/fixtures/passline_before_after.json`, `pytest -c pytest.ini --rootdir=. tests/gates/step_39` passes. The tests also generate before/after series whose drop lands just below, on and just above 0.5 and 1.0 points: exactly 1.0 is `PASS`, exactly 0.5 is in the T11 zone, and anything under 0.5 is `FAIL`. Money is summed in integer cents, and the ratio is computed with `Decimal`, so boundaries never depend on float rounding.
@@ -52,7 +52,7 @@ Founder input: ask the founder for PASS_LINE (pilot day one, the T11 rule for a 
 Work, test first:
 - Set docs/build/status/STEP-39.json status to "in_progress".
 - Write the gate files exactly as listed in docs/build/gates/STEP-39.txt: a synthetic fixture (restaurant-level daily totals only) and tests for every acceptance criterion, including generated boundary series and every V-item branch. Run them; they fail (print RED TEST (intentional) if you stop here).
-- Implement tillowl/rules/passline.py, PASS_LINE in tillowl/config.py with the founder's values, and only the D10 variant chosen.
+- Implement tillowl/rules/passline.py, PASS_LINE in tillowl/config.py (read from the environment; no values in code), and only the D10 variant chosen.
 - Run the gate command and CLAUDE.md's test command; show both outputs. Commit; open the step PR with gh (status in_progress), asking the founder to review the PASS_LINE values. It merges when CI is green.
 Done PR (after the step PR merges): one commit on top of main holding only docs/build/evidence/STEP-39.md and the status set to "done". run_id is the green ci push run on main for that commit's parent; count: N passed comes from that run (gh run view <id> --log or its JUnit summary). Run python tools/check_evidence.py validate --step STEP-39 and show the output. Never claim success without the output.
 Out of scope: digest wording, telling the owner the result, a production pass-line command, the D10 variant not chosen.

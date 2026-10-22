@@ -1,7 +1,7 @@
 # STEP-41 Metered cost estimate (T9, scenario 5)
 
 Track: build. Lane: platform. Gate kind: human. Size: S. Runs only if STEP-21 recorded GO.
-Depends on: STEP-26 Digest build and delivery, STEP-37 Flags B and the ranker. Done requires: none. D13 (Render plan, Postgres instance types and their price) must be decided before the founder's run.
+Depends on: STEP-26 Digest build and delivery, STEP-37 Flags B and the ranker, STEP-38 V-item branches (so the metered digests carry the final wording). Done requires: none. D13 (Render plan, Postgres instance types and their price) must be decided before the founder's run.
 Blocks: STEP-40 counsel T17b (it reviews the sample outputs this step saves), STEP-43 pilot-readiness gate.
 Sources: Slide 22 (lean line ~$20–25: tokens ~$1 = 8.1M in + 0.56M out at $0.10/$0.50 per million, SMS ~$15 = 1,000 segments + number + 10DLC campaign fee, hosting ~$5, database cost TBD), Slide 24 (scenario 5: "checked on each month's bill"), Slide 25 (ADR-002, ADR-005 "SMS costs scale with message length", ADR-007 Proposed until the database cost is known), Slide 19–20 (LLM and Twilio lines), Slide 30 (T9); planning prompt situation (Haiku 5.5 costs $0.50/$2.50 above 100k tokens); BUILD_PLAN §7, §10, design choices 2, 21, 22; D11, D13.
 

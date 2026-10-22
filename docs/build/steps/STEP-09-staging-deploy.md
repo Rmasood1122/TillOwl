@@ -18,7 +18,7 @@ Staging holds synthetic data only and is off the service path: nothing here touc
   - Inputs: each scheduled job in `TILLOWL_JOBS_ENABLED` and its `config.JOB_MAX_AGE_HOURS` entry.
   - It emails the founder (`TILLOWL_FOUNDER_EMAIL`) one alert per job whose last successful run is older than that, or that never succeeded, then exits 1 so Render's failure email fires too.
   - It also checks its own previous run, so a missed watchdog run is reported after the fact.
-  - Sender: `TILLOWL_EMAIL_MODE` is `stub` (the default when unset; records each send) or the email vendor's API (Resend, unverified candidate; read its official docs in-session). It stays `stub` on staging until the founder switches it.
+  - Sender: STEP-08's `tillowl/email.py` `send_email`; this step adds its real email-vendor transport (Resend, unverified candidate; read its official docs in-session) behind `TILLOWL_EMAIL_MODE`, `stub` by default. It stays `stub` on staging until the founder switches it.
 - **Render failure email.** Workspace notifications are set to "Only failure notifications", which covers "A cron job execution fails" by email. One-off job failures notify by Slack only (unverified candidate, https://render.com/docs/notifications).
 - **GitHub `staging` environment** (founder): secrets `RENDER_STAGING_DEPLOY_HOOK` and `STAGING_DATABASE_URL`, and variable `STAGING_URL`.
 - **The CREATE ROLE answer**, recorded in the step PR description and passed on to STEP-13. Whether the staging database user may run 0003's `CREATE ROLE` is TBD — not in sources. If it can't, the founder creates the four roles once by hand.

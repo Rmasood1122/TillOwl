@@ -8,7 +8,7 @@ Sources: Slide 24 (scenarios 1–4 as tests; scenario 5 "checked on each month's
 ## Outcome
 Before the gate, the founder fixes pilot day one in production config (`PASS_LINE` day one, from the signed DPA; STEP-39 reads it) and sets the D21 rule constants. Until day one the production cron stays `python -m tillowl.jobs.refresh_tokens && python -m tillowl.jobs.watchdog` with `TILLOWL_JOBS_ENABLED=refresh_tokens,watchdog`. `health_check` does not check the job list, so it passes now and after day one.
 
-All eight BUILD_PLAN §5 conditions hold on one release, the 30-day "before" window is pulled, and the evidence is on file. The founder runs the gate on day one itself (the window ends the day before, so it must be complete in the restaurant's time zone; design choice 18). If the gate fails, nothing is enabled; day one moves only by the founder's decision recorded in config, and the whole gate re-runs.
+All nine BUILD_PLAN §5 conditions hold on one release, the 30-day "before" window is pulled, and the evidence is on file. The founder runs the gate on day one itself (the window ends the day before, so it must be complete in the restaurant's time zone; design choice 18). If the gate fails, nothing is enabled; day one moves only by the founder's decision recorded in config, and the whole gate re-runs.
 
 On day one, after the done PR merges, the founder (and only the founder):
 1. Adds `nightly_pull`, `run_rules`, `run_explain` and `run_digest` to production's `TILLOWL_JOBS_ENABLED` and cron, keeping `refresh_tokens` and `watchdog`.

@@ -31,7 +31,7 @@ The founder approved the outline on Oct 20, 2026 ("Approve all"). "Founder asked
 4. STEP-41 (cost) became gate kind `human`: a metered estimate needs real model calls on synthetic flags, which CI may not make.
 5. New founder decisions: D15 (legal entity), D16 (RK1 thresholds), D17 (gh on macOS), D18 (staging database exposure).
 6. After an independent review: STEP-35 also depends on STEP-32 (the mapping); STEP-20 lists STEP-11 directly; STEP-40 depends on STEP-41, which saves the real-model sample outputs counsel reviews; STEP-24 and STEP-31 became ci_staging, so scenarios 1 and 2 run on staging; STEP-22's gate adds the notice-export receipt; steps 31–43 carry `runs_if: "GO"`.
-7. While writing the step files (Phase B2): STEP-17 also depends on STEP-14 (it reuses `provision_tenant --kind pilot`); STEP-25 on STEP-23 (the explanation prompt file); STEP-40 on STEP-39 (a D10 link would change a template); STEP-24's done PR needs STEP-09 (its gate runs in the staging workflow); STEP-02, 03 and 04 each record a findings file; gate lists freeze `health_check` (STEP-13), the live-report logic (STEP-20), `roster_read` (STEP-33) and `terminate_tenant` (STEP-29); new jobs `provision_support_user` (STEP-27), `terminate_tenant` (STEP-29) and `passline_report` (STEP-39); evidence lines `release:` and `passline:`.
+7. While writing the step files (Phase B2): STEP-17 also depends on STEP-14 (it reuses `provision_tenant --kind pilot`); STEP-25 on STEP-23 (the explanation prompt file); STEP-40 on STEP-39 (a D10 link would change a template); STEP-41 on STEP-38 (meter the final wording); STEP-24's done PR needs STEP-09 (its gate runs in the staging workflow); STEP-02, 03 and 04 each record a findings file; gate lists freeze `health_check` (STEP-13), the live-report logic (STEP-20), `roster_read` (STEP-33) and `terminate_tenant` (STEP-29); new jobs `provision_support_user` (STEP-27), `terminate_tenant` (STEP-29) and `passline_report` (STEP-39); evidence lines `release:` and `passline:`.
 
 ## 2. Strategy
 
@@ -83,11 +83,11 @@ Gate commands use `pytest -c pytest.ini --rootdir=. tests/gates/step_NN` (shorte
 | 38 | V-item branches in templates and checker | build | digest | ci_fixture | Unconfirmed fields left out or the fallback wording used | `pytest step_38` | 21, 24, 37 | — | S |
 | 39 | Pass-line measurement | build | rules | ci_fixture | Voids + comps + discounts as % of net sales (or the DPA substitute), 30 days before and 60 after; the D10 opening measure | `pytest step_39` | 21, 31 | — | S |
 | 40 | Counsel review T17b | human | legal | human | Counsel signs off templates, explanation prompt, deny-list and the real-model sample outputs STEP-41 saved; manifest hash recorded | `check_artifact --step STEP-40 --label counsel_t17b --role counsel && python tools/check_evidence.py manifest` | 25, 26, 38, 39, 41 | — | W |
-| 41 | Metered cost estimate (T9, scenario 5) | build | platform | human | Real model calls on synthetic flags measure tokens in, out and thinking, and save the outputs as the T17b samples (`docs/build/findings/llm-samples.md`, synthetic data only); SMS segments; Render web, cron and both databases at current prices; total ≤ the lean line. Runs in the founder's terminal with a non-production Anthropic key | `python -m tillowl.jobs.cost_estimate --sample tests/gates/step_41/fixtures/cost_sample.json --live --check` | 26, 37 | — | S |
+| 41 | Metered cost estimate (T9, scenario 5) | build | platform | human | Real model calls on synthetic flags measure tokens in, out and thinking, and save the outputs as the T17b samples (`docs/build/findings/llm-samples.md`, synthetic data only); SMS segments; Render web, cron and both databases at current prices; total ≤ the lean line. Runs in the founder's terminal with a non-production Anthropic key | `python -m tillowl.jobs.cost_estimate --sample tests/gates/step_41/fixtures/cost_sample.json --live --check` | 26, 37, 38 | — | S |
 | 42 | Billing with one-click cancel | build | console | ci_fixture | Needed by day 90, not by STEP-43; provider is D12 | `pytest step_42` | 07, 10 | — | M |
 | 43 | Pilot-readiness gate | human | gate | human | All pilot-gate conditions hold (§5); one release on staging and production; the pass-line "before" window pulled for the fixed day one; real SMS (synthetic digest and reconnect text) to the founder's phone; then the founder enables the nightly, explanation and digest jobs on day one | `python tools/check_evidence.py pilot-gate && python -m tillowl.jobs.health_check --env production && python -m tillowl.jobs.history_pull --tenant pilot --before-day-one && python -m tillowl.jobs.send_test --env staging --channel sms --to founder` | 03, 04, 05, 07, 15, 20, 21, 26, 30, 33, 34, 36, 37, 38, 39, 40, 41 | — | S |
 
-**Critical path:** 01 → 08 → 09 → 11 → 12 → 13 → 15 (T1 wait) → 16 → 20 → 21 → 31 → 35 → 36 → 37 → 41 → 40 (counsel wait) → 43; STEP-38 (after 37) also feeds 40. The counsel branch 02 → 05/06 → 20 joins at the spike and is likely the longer wait. External waits on this path: T1 approval, counsel T17a and T17b, and 10DLC (STEP-03 feeds 43). The 6–8 week target holds only if counsel and Square approval each answer within about two weeks; nothing in the sources says they will.
+**Critical path:** 01 → 08 → 09 → 11 → 12 → 13 → 15 (T1 wait; 14 runs alongside) → 16 → 20 → 21 → 31 → 35 → 36 → 37 → 38 → 41 → 40 (counsel wait) → 43 (18 steps; `tools/build_progress.py` prints the same chain). The counsel branch 02 → 05/06 → 20 joins at the spike and is likely the longer wait. External waits on this path: T1 approval, counsel T17a and T17b, and 10DLC (STEP-03 feeds 43). The 6–8 week target holds only if counsel and Square approval each answer within about two weeks; nothing in the sources says they will.
 
 **T1 dependency (D5).** Default branch, written into the status files: STEP-15 depends on 01 and 13, and STEP-16 depends on 15. If STEP-01 finds that Square approval requires a working production connect, the founder approves a gate-change PR that switches to: STEP-16 depends on 14 only, and STEP-15 depends on 16.
 
@@ -195,6 +195,7 @@ graph TD
   S36 --> S43
   S37 --> S38
   S37 --> S41
+  S38 --> S41
   S37 --> S43
   S38 --> S40(40 Counsel T17b)
   S38 --> S43
@@ -277,6 +278,7 @@ These names are fixed now so parallel steps meet in the middle. Changing one is 
   - `history_pull --before-day-one` pulls the 30 days ending the day before `PASS_LINE` day one (built in STEP-34; run as STEP-43's gate command, so the pass-line "before" figure has evidence). The founder sets day one in config before STEP-43.
   - STEP-33 also records, owner-only, the notice version and posting date and the owner's phone for SMS; `onboarding_report` prints `count:` lines for `notice_versions` and `owner_phones`.
   - Settings that differ per environment (`BACKUP_RETENTION_DAYS`, `SPIKE_OAUTH_AFTER`, `SUPPORT_GRANT_MAX_HOURS`, `PASS_LINE` values) are read by `tillowl/config.py` from the service's environment; steps never hard-code them.
+- **Email:** `tillowl/email.py` `send_email(to, subject, body)` (STEP-08; `TILLOWL_EMAIL_MODE=stub` by default, real vendor transport added in STEP-09). All email goes through it; SMS goes through STEP-26's `deliver.py`.
 - **Config (`tillowl/config.py`):** `V_ITEMS` (every item NOT_RETURNED until STEP-21 records GO, then read from `square-fields.md`; the only place steps read V-items), `COUNSEL` (the T17a codes from `counsel-t17a-answers.md`), `PASS_LINE` (day one, T11 rule, substitute measures, from the signed DPA), `RANK_TOP_N` and baseline constants (D21), `SUPPORT_GRANT_MAX_HOURS` (D22), `BACKUP_RETENTION_DAYS`; secrets `TILLOWL_HMAC_KEY`, the AES key, `TILLOWL_OWNER_EMAIL_OWN`, `TILLOWL_OWNER_EMAIL_PILOT`.
 - **Lifecycle:** ci_fixture and ci_staging steps use a step PR (status `in_progress`) and then a done PR holding only evidence and status. Production-job steps and human steps that ship code (STEP-41) do the same, with the founder's pasted job output as evidence. Human steps with no code (02–07, 12, 15, 18, 21, 40, 43) use one PR straight to `done`.
 - **Job switches:** `TILLOWL_JOBS_ENABLED` (comma list) on each Render service; production holds `refresh_tokens` only until STEP-43. `TILLOWL_LLM_ENABLED=0` in production until T8 or D11. `TILLOWL_SMS_ENABLED=0` until STEP-03 is done.
@@ -396,6 +398,8 @@ Each is a choice the sources leave open. Accepting this plan accepts them; strik
 48. D10 observations are recorded through `audit()`; counsel's T17b review names the manifest hash it covers; the founder fixes pilot day one before STEP-43, whose gate pulls the 30-day "before" window, and enables the jobs on that day (STEP-39, 40, 43).
 49. `provision_support_user` is a founder-launched production provisioning job (STEP-27 builds it, STEP-33's gate runs it), alongside the two tenant-provisioning jobs the planning prompt allows before the pilot gate.
 50. The weekly check-in (D10) is recorded by the owner only; support access stays limited to acknowledgments and shift windows (STEP-39).
+51. Re-running `provision_tenant` for an owner still `invited` with an expired link voids it and sends one new link; otherwise a re-run changes nothing (STEP-10, used by STEP-17).
+52. The owner's SMS phone lives on `owner_user.phone`, set only by the owner on STEP-28's settings screen after the signed SMS opt-in (STEP-03).
 
 ## 12. Decisions the founder must make
 
